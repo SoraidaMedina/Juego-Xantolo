@@ -12,9 +12,9 @@ extends CharacterBody2D
 @export var velocidad_persecucion: float = 135.0
 @export var distancia_patrulla: float = 160.0
 ## Distancia a la que oye pasos normales (saltar la multiplica x1.6)
-@export var rango_oido: float = 170.0
+@export var rango_oido: float = 190.0
 ## Segundos de ruido continuo antes de descubrirte
-@export var tiempo_para_detectar: float = 1.4
+@export var tiempo_para_detectar: float = 1.2
 ## Segundos que te persigue antes de rendirse
 @export var tiempo_persecucion: float = 3.0
 @export var rango_contacto: float = 42.0
@@ -23,8 +23,8 @@ extends CharacterBody2D
 ## Ciclo de aparecer / desaparecer (segundos, al azar entre min y max)
 @export var tiempo_visible_min: float = 6.0
 @export var tiempo_visible_max: float = 10.0
-@export var tiempo_oculto_min: float = 2.5
-@export var tiempo_oculto_max: float = 4.5
+@export var tiempo_oculto_min: float = 2.0
+@export var tiempo_oculto_max: float = 3.5
 ## Radio en el que avisa a otros chaneques cuando te descubre
 @export var rango_grupo: float = 450.0
 ## Qué tan rápido sube la sospecha si estás quieta, a la vista y muy cerca (0 = nunca)
@@ -112,8 +112,16 @@ func _escuchar(j: CharacterBody2D, delta: float) -> void:
 	if j == null or j.atrapada or j.esta_escondida():
 		_bajar_sospecha(delta)
 		return
+	var nivel = get_tree().get_first_node_in_group("nivel")
+	if nivel and nivel.has_method("misma_pantalla") and not nivel.misma_pantalla(global_position):
+		_bajar_sospecha(delta)   # no oye lo que pasa en otra pantalla
+		return
 	var dist := global_position.distance_to(j.global_position)
 	var ruido: float = j.nivel_ruido() if j.has_method("nivel_ruido") else (1.0 if absf(j.velocity.x) > 10.0 else 0.0)
+	# Chocar con él haciendo ruido = te atrapa de inmediato
+	if ruido > 0.0 and absf(j.global_position.x - global_position.x) < rango_contacto and absf(j.global_position.y - global_position.y) < 90.0:
+		_atrapar(j)
+		return
 	var sube := 0.0
 	if ruido > 0.0 and dist < rango_oido * ruido:
 		sube = 1.0
@@ -126,6 +134,7 @@ func _escuchar(j: CharacterBody2D, delta: float) -> void:
 	sospecha += delta * sube
 	if estado == "patrulla":
 		estado = "alerta"
+		Juego.sfx("risa_chaneque", -14.0)
 	anim.flip_h = j.global_position.x < global_position.x
 	_play("cry")
 	_mostrar_icono("?", Color(0.85, 0.85, 0.85))
@@ -163,6 +172,8 @@ func _descubrir(j: CharacterBody2D, avisar: bool) -> void:
 	_mostrar_icono("!", Color.WHITE)
 	_play("cry")
 	if avisar:
+		Juego.sfx("descubierta")
+		Juego.sfx("risa_chaneque")
 		# Atacan en grupo: los que están cerca también vienen
 		for c in get_tree().get_nodes_in_group("chaneques"):
 			if c != self and c.has_method("unirse") and c.global_position.distance_to(global_position) <= rango_grupo:
@@ -239,6 +250,8 @@ func _desvanecer(espera: float, nuevo_estado: String) -> void:
 	_icono.visible = false
 	$CollisionShape2D.set_deferred("disabled", true)
 	_play("disappear")
+	if _visible_en_pantalla():
+		Juego.sfx("risa_chaneque", -18.0)
 	var fuera := create_tween()
 	fuera.tween_property(anim, "modulate:a", 0.0, 0.6)
 	await fuera.finished
@@ -282,3 +295,8 @@ func _play(nombre: String) -> void:
 		anim.play(nombre)
 	elif anim.sprite_frames and anim.sprite_frames.has_animation("idle"):
 		anim.play("idle")
+
+
+func _visible_en_pantalla() -> bool:
+	var nivel = get_tree().get_first_node_in_group("nivel")
+	return nivel == null or not nivel.has_method("misma_pantalla") or nivel.misma_pantalla(global_position)

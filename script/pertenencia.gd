@@ -74,6 +74,7 @@ func tomar(jugador: Node) -> void:
 	hide()
 	set_deferred("monitoring", false)
 	tomada.emit(self)
+	Juego.sfx("recoger", -4.0)
 
 
 ## Regresa a su lugar original (al cambiarla por otra o al fallar la entrega)

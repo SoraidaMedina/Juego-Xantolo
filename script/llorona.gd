@@ -60,6 +60,7 @@ func _physics_process(delta: float) -> void:
 			_patrullar()
 			if _ve_jugador(jugador, false):
 				estado = "persecucion"
+				Juego.sfx("llanto", -4.0)
 				_mostrar_icono("!", Color(1, 0.4, 0.4))
 		"persecucion":
 			if _ve_jugador(jugador, true):
@@ -86,6 +87,7 @@ func _physics_process(delta: float) -> void:
 			_t_busqueda += delta
 			if _ve_jugador(jugador, false):
 				estado = "persecucion"
+				Juego.sfx("llanto", -4.0)
 				_mostrar_icono("!", Color(1, 0.4, 0.4))
 			elif _t_busqueda >= tiempo_busqueda:
 				estado = "patrulla"

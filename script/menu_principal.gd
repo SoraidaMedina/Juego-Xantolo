@@ -9,6 +9,7 @@ extends Control
 var _principal: VBoxContainer
 var _panel_info: VBoxContainer
 var _texto_info: Label
+var _titulo_info: Label
 var _tabla_controles: GridContainer
 var _vela: TextureRect
 var _t := 0.0
@@ -18,7 +19,6 @@ func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	_crear_fondo()
 	_crear_menu()
-	_crear_panel_info()
 	_mostrar_principal()
 
 
@@ -96,6 +96,7 @@ func _crear_menu() -> void:
 	_agregar_boton(_principal, "Controles", _mostrar_controles)
 	_agregar_boton(_principal, "Créditos", _mostrar_creditos)
 	_agregar_boton(_principal, "Salir", get_tree().quit)
+	_crear_panel_info(columna)
 
 	# Chicomexochitl, la vela viviente, a la derecha
 	_vela = TextureRect.new()
@@ -111,25 +112,22 @@ func _crear_menu() -> void:
 	add_child(_vela)
 
 
-func _crear_panel_info() -> void:
-	var margen := MarginContainer.new()
-	margen.set_anchors_preset(Control.PRESET_FULL_RECT)
-	margen.add_theme_constant_override("margin_left", 80)
-	margen.add_theme_constant_override("margin_top", 220)
-	margen.mouse_filter = Control.MOUSE_FILTER_IGNORE  # no tapar los botones del menú
-	add_child(margen)
+func _crear_panel_info(columna: VBoxContainer) -> void:
+	# Ocupa el mismo lugar que los botones, debajo del título
 	_panel_info = VBoxContainer.new()
-	_panel_info.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-	_panel_info.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	_panel_info.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_panel_info.add_theme_constant_override("separation", 16)
-	margen.add_child(_panel_info)
+	_panel_info.add_theme_constant_override("separation", 14)
+	columna.add_child(_panel_info)
+	_titulo_info = Juego.crear_titulo("", 26)
+	_titulo_info.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	_panel_info.add_child(_titulo_info)
 	_texto_info = Juego.crear_texto("", 16)
 	_texto_info.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	_texto_info.add_theme_constant_override("line_spacing", 4)
 	_panel_info.add_child(_texto_info)
 	_tabla_controles = _crear_tabla_controles()
 	_panel_info.add_child(_tabla_controles)
-	var volver := Juego.crear_boton("Volver")
+	var volver := Juego.crear_boton("‹  Volver")
 	volver.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	volver.pressed.connect(_mostrar_principal)
 	_panel_info.add_child(volver)
@@ -148,20 +146,21 @@ func _mostrar_principal() -> void:
 	_principal.get_child(0).grab_focus()
 
 
-func _mostrar_info(texto: String, con_controles: bool = false) -> void:
+func _mostrar_info(titulo: String, texto: String, con_controles: bool = false) -> void:
+	_titulo_info.text = titulo
 	_texto_info.text = texto
 	_tabla_controles.visible = con_controles
 	_principal.visible = false
 	_panel_info.visible = true
-	_panel_info.get_child(2).grab_focus()
+	_panel_info.get_child(_panel_info.get_child_count() - 1).grab_focus()
 
 
 func _mostrar_controles() -> void:
-	_mostrar_info("No puedes pelear: escóndete, quédate quieta y cuida tu luz.", true)
+	_mostrar_info("Controles", "No puedes pelear: escóndete, quédate quieta y cuida tu luz.", true)
 
 
 func _mostrar_creditos() -> void:
-	_mostrar_info(creditos)
+	_mostrar_info("Créditos", creditos)
 
 
 func _crear_tabla_controles() -> GridContainer:

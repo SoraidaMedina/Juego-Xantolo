@@ -12,6 +12,16 @@ const NIVELES := [
 	"res://scenes/niveles/NivelFinalPueblo.tscn",
 ]
 
+## Música de cada escena (assets/audio/musica/<nombre>.ogg)
+const MUSICA_POR_ESCENA := {
+	"res://scenes/MenuPrincipal.tscn": "menu",
+	"res://scenes/niveles/Nivel1Sierra.tscn": "sierra",
+	"res://scenes/niveles/Nivel2Rio.tscn": "rio",
+	"res://scenes/niveles/Nivel3Monte.tscn": "monte",
+	"res://scenes/niveles/NivelFinalPueblo.tscn": "pueblo",
+}
+const VOLUMEN_MUSICA_DB := -6.0
+
 const GRIS_TEXTO := Color(0.85, 0.85, 0.85)
 const GRIS_TENUE := Color(0.55, 0.55, 0.55)
 
@@ -20,6 +30,11 @@ var _pausa: Control
 var _gameover: Control
 var _texto_gameover: Label
 var _cambiando := false
+var _musica: Array[AudioStreamPlayer] = []
+var _musica_actual := 0
+var _nombre_musica := ""
+var _sfx: Array[AudioStreamPlayer] = []
+var _cache_sfx := {}
 
 
 func _ready() -> void:
@@ -37,6 +52,8 @@ func _ready() -> void:
 	_negro.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_negro.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(_negro)
+	_crear_audio()
+	_actualizar_musica.call_deferred()
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -93,6 +110,7 @@ func cambiar_escena(ruta: String) -> void:
 	get_tree().change_scene_to_file(ruta)
 	await get_tree().process_frame
 	await get_tree().process_frame
+	_actualizar_musica()
 	var b := create_tween()
 	b.tween_property(_negro, "color:a", 0.0, 0.8)
 	await b.finished
@@ -113,11 +131,13 @@ func _puede_pausar() -> bool:
 
 func pausar() -> void:
 	get_tree().paused = true
+	_volumen_musica(VOLUMEN_MUSICA_DB - 10.0)
 	_pausa.visible = true
 	_enfocar_primero(_pausa)
 
 
 func reanudar() -> void:
+	_volumen_musica(VOLUMEN_MUSICA_DB)
 	_pausa.visible = false
 	get_tree().paused = false
 
@@ -131,6 +151,8 @@ func game_over(texto: String = "Las ánimas te alcanzaron…") -> void:
 	_pausa.visible = false
 	get_tree().paused = true
 	_texto_gameover.text = texto
+	sfx("atrapada")
+	_volumen_musica(VOLUMEN_MUSICA_DB - 14.0)
 	_gameover.modulate.a = 0.0
 	_gameover.visible = true
 	var tw := create_tween()
@@ -236,6 +258,7 @@ func crear_boton(texto: String) -> Button:
 	b.add_theme_stylebox_override("pressed", marca)
 	# El mouse y el teclado marcan el mismo botón
 	b.mouse_entered.connect(b.grab_focus)
+	b.pressed.connect(sfx.bind("ui", -6.0))
 	return b
 
 
@@ -266,3 +289,72 @@ func _asegurar_accion(nombre: String, tecla: Key) -> void:
 	var nuevo := InputEventKey.new()
 	nuevo.physical_keycode = tecla
 	InputMap.action_add_event(nombre, nuevo)
+
+
+# ---------- Audio ----------
+
+func _crear_audio() -> void:
+	for i in 2:
+		var m := AudioStreamPlayer.new()
+		m.volume_db = -80.0
+		add_child(m)
+		_musica.append(m)
+	for i in 10:
+		var p := AudioStreamPlayer.new()
+		add_child(p)
+		_sfx.append(p)
+
+
+func _actualizar_musica() -> void:
+	musica(MUSICA_POR_ESCENA.get(_escena_actual(), ""))
+
+
+## Cambia la música con un fundido cruzado. "" = silencio.
+func musica(nombre: String, fundido: float = 1.5) -> void:
+	if nombre == _nombre_musica:
+		_volumen_musica(VOLUMEN_MUSICA_DB)
+		return
+	_nombre_musica = nombre
+	var viejo := _musica[_musica_actual]
+	_musica_actual = 1 - _musica_actual
+	var nuevo := _musica[_musica_actual]
+	var tw := create_tween().set_parallel(true)
+	tw.tween_property(viejo, "volume_db", -80.0, fundido)
+	tw.chain().tween_callback(viejo.stop)
+	var ruta := "res://assets/audio/musica/%s.ogg" % nombre
+	if nombre == "" or not ResourceLoader.exists(ruta):
+		return
+	var stream = load(ruta)
+	if stream is AudioStreamOggVorbis:
+		stream.loop = true
+	nuevo.stream = stream
+	nuevo.volume_db = -40.0
+	nuevo.play()
+	create_tween().tween_property(nuevo, "volume_db", VOLUMEN_MUSICA_DB, fundido)
+
+
+func _volumen_musica(db: float) -> void:
+	if _musica.is_empty():
+		return
+	create_tween().tween_property(_musica[_musica_actual], "volume_db", db, 0.4)
+
+
+## Efecto de sonido de assets/audio/sfx/<nombre>.ogg. volumen_db: 0 = normal, negativo = más bajo.
+func sfx(nombre: String, volumen_db: float = 0.0, tono: float = 1.0) -> void:
+	if not _cache_sfx.has(nombre):
+		var ruta := "res://assets/audio/sfx/%s.ogg" % nombre
+		_cache_sfx[nombre] = load(ruta) if ResourceLoader.exists(ruta) else null
+	var stream = _cache_sfx[nombre]
+	if stream == null:
+		return
+	var libre: AudioStreamPlayer = null
+	for p in _sfx:
+		if not p.playing:
+			libre = p
+			break
+	if libre == null:
+		libre = _sfx[0]
+	libre.stream = stream
+	libre.volume_db = volumen_db
+	libre.pitch_scale = tono
+	libre.play()

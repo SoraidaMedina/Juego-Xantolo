@@ -32,6 +32,7 @@ var _mano: Sprite2D
 var _ruido_caida := 0.0      # segundos de ruido fuerte al caer de un salto
 var _en_suelo_antes := true
 var _radio_visible := 0.0
+var _t_paso := 0.0
 
 
 func _ready() -> void:
@@ -66,17 +67,31 @@ func _physics_process(delta: float) -> void:
 
 	if Input.is_action_just_pressed("saltar") and is_on_floor() and not agachada:
 		velocity.y = fuerza_salto
+		Juego.sfx("salto", -4.0, randf_range(0.95, 1.05))
 
 	velocity.x = dir * (velocidad_agachada if agachada else velocidad)
 	move_and_slide()
 	if is_on_floor() and not _en_suelo_antes:
 		_ruido_caida = 0.35
+		Juego.sfx("caida", -6.0, randf_range(0.9, 1.1))
+	_sonido_pasos(delta)
 	_en_suelo_antes = is_on_floor()
 	_ruido_caida = maxf(_ruido_caida - delta, 0.0)
 	_actualizar_animacion(dir)
 
 	# Se oscurece cuando está escondida
 	anim.self_modulate = Color(0.45, 0.45, 0.5) if esta_escondida() else Color.WHITE
+
+
+func _sonido_pasos(delta: float) -> void:
+	if not is_on_floor() or absf(velocity.x) < 10.0:
+		_t_paso = 0.12
+		return
+	_t_paso -= delta
+	if _t_paso <= 0.0:
+		_t_paso = 0.5 if agachada else 0.32
+		# Agachada casi no se oye
+		Juego.sfx("paso", -24.0 if agachada else -9.0, randf_range(0.85, 1.15))
 
 
 ## 0 = silencio (quieta o agachada) · 1 = pasos · 1.6 = saltar / caer
@@ -148,6 +163,7 @@ func ser_atrapada(motivo: String = "") -> void:
 	if atrapada:
 		return
 	atrapada = true
+	Juego.sfx("atrapada", -3.0)
 	vidas -= 1
 	vidas_cambiadas.emit(vidas)
 	_aviso_vida(motivo)

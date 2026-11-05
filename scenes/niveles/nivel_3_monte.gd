@@ -19,6 +19,7 @@ extends Node2D
 	"El Nahual no ve bien en la oscuridad… pero siente cuando algo se mueve, y la luz lo atrae.",
 	"Cuando se detenga a vigilar, quédate quieta… y oculta la luz de Chicomexochitl con [F].",
 	"Esa luz se gasta mientras brilla y regresa cuando la ocultas. No la desperdicies.",
+	"Si viene hacia ti, no corras, mija: quieta y con la luz oculta… pasará de largo.",
 	"Si encuentras arbustos, agáchate [%agachar%] entre ellos. Ahí no te puede ver.",
 	"Sube por las rocas hasta el hueco de la montaña. Por dentro de la cueva se llega al pueblo.",
 	"Llega antes del amanecer, mija. Tu familia te espera.",
@@ -41,6 +42,7 @@ var _terminado := false
 var _vigilando := 0
 var _aviso_mostrado := false
 var _jugando := false   # empieza cuando termina el diálogo
+var _aviso_cerca := false
 
 
 func _ready() -> void:
@@ -84,10 +86,21 @@ func _process(delta: float) -> void:
 		if _luz_agotada and luz >= luz_max * 0.3:
 			_luz_agotada = false
 
+	_revisar_cercania()
 	if _luz:
 		var energia := 0.12 if not luz_visible() else lerpf(0.5, 1.15, luz / luz_max)
 		_luz.energy = lerpf(_luz.energy, energia, 1.0 - exp(-10.0 * delta))
 	_actualizar_hud()
+
+
+## La primera vez que el Nahual se acerca, recuerda cómo dejarlo pasar
+func _revisar_cercania() -> void:
+	if _aviso_cerca or _jugador == null:
+		return
+	for n in get_tree().get_nodes_in_group("nahual"):
+		if n.global_position.distance_to(_jugador.global_position) < 260.0 and not _jugador.esta_escondida():
+			_aviso_cerca = true
+			_mostrar_mensaje("Se acerca… quédate quieta y oculta la luz  [F]", 3.0)
 
 
 func _on_vigilancia(activa: bool) -> void:

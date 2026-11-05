@@ -66,6 +66,7 @@ func _physics_process(delta: float) -> void:
 				estado = "aviso"
 				_t = tiempo_aviso
 				_mostrar_icono("!", Color(1.0, 0.85, 0.4))
+				Juego.sfx("latido", -2.0)
 				_play(["detect", "cry", "idle"])
 		"aviso":
 			velocity.x = 0.0
@@ -76,6 +77,7 @@ func _physics_process(delta: float) -> void:
 				_t = tiempo_vigilando
 				_mostrar_icono("!", Color(1.0, 0.45, 0.3))
 				vigilancia.emit(true)
+				Juego.sfx("grunido", -3.0)
 		"vigilando":
 			velocity.x = 0.0
 			# Voltea a ambos lados mientras vigila
@@ -117,6 +119,11 @@ func _detecta(j: CharacterBody2D) -> bool:
 	var dy := absf(j.global_position.y - global_position.y)
 	if dx > rango_vision or dy > alto_vision:
 		return false
+	return _delata_presencia(j)
+
+
+## Xochik "contiene su presencia" si está quieta y con la luz oculta
+func _delata_presencia(j: CharacterBody2D) -> bool:
 	var se_mueve := absf(j.velocity.x) > 5.0 or not j.is_on_floor()
 	var nivel = get_tree().get_first_node_in_group("nivel")
 	var luz_prendida: bool = nivel != null and nivel.has_method("luz_visible") and nivel.luz_visible()
@@ -135,11 +142,14 @@ func _revisar_contacto(j: CharacterBody2D) -> void:
 	var dx := absf(j.global_position.x - global_position.x)
 	var dy := absf(j.global_position.y - global_position.y)
 	if choco or (dx < rango_contacto and dy < 80.0):
-		_cazar(j)
+		# Si contiene su presencia (quieta + luz oculta), el Nahual pasa de largo
+		if _delata_presencia(j):
+			_cazar(j)
 
 
 func _cazar(j: CharacterBody2D) -> void:
 	estado = "cazando"
+	Juego.sfx("descubierta")
 	vigilancia.emit(false)
 	_mostrar_icono("!!", Color(1.0, 0.3, 0.3))
 	anim.flip_h = j.global_position.x < global_position.x

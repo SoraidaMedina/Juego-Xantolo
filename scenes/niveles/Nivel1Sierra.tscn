@@ -1,95 +1,220 @@
-[gd_scene format=3 uid="uid://bac0wvexqj5tl"]
+[gd_scene format=3]
 
-[ext_resource type="Script" uid="uid://d3e0nxsmrjk5r" path="res://nivel_1_sierra.gd" id="1_a64pu"]
-[ext_resource type="Texture2D" uid="uid://b506hwkm5cvwj" path="res://assets/fondos/La_Sierra_de_los_Chaneques.png" id="2_lthpk"]
-[ext_resource type="PackedScene" uid="uid://2mliplafc3uu" path="res://scenes/personajes/Xochik.tscn" id="3_tvjvc"]
-[ext_resource type="PackedScene" uid="uid://b8nduubajhyl7" path="res://scenes/personajes/Chicomexochitl.tscn" id="4_fnkpx"]
-[ext_resource type="PackedScene" uid="uid://bxw3rif45c1f0" path="res://scenes/niveles/PuntoControl.tscn" id="5_8fyhb"]
-[ext_resource type="PackedScene" uid="uid://dsohss617q4dj" path="res://scenes/personajes/chaneque.tscn" id="6_dmm6d"]
-[ext_resource type="PackedScene" path="res://scenes/objeto_ofrenda.tscn" id="7_fnkpx"]
-[ext_resource type="Texture2D" uid="uid://cb1n100qh4ce2" path="res://assets/objetos/vela2.png" id="8_p3xlf"]
-[ext_resource type="Texture2D" uid="uid://db24rsa2a3ihc" path="res://assets/objetos/flor_cempasuchil.png" id="9_0hn0m"]
-[ext_resource type="Texture2D" uid="uid://bodpu73f5uhdv" path="res://assets/objetos/copal.png" id="10_go21x"]
-[ext_resource type="Texture2D" uid="uid://buiru4pr2l80t" path="res://assets/objetos/petalos.png" id="11_67kyt"]
-[ext_resource type="PackedScene" path="res://scenes/escondite.tscn" id="12_escon"]
+[ext_resource type="Script" uid="uid://d3e0nxsmrjk5r" path="res://nivel_1_sierra.gd" id="1_r"]
+[ext_resource type="Texture2D" path="res://assets/fondos/sierra_1_canaveral.png" id="2_r"]
+[ext_resource type="Texture2D" uid="uid://b506hwkm5cvwj" path="res://assets/fondos/La_Sierra_de_los_Chaneques.png" id="3_r"]
+[ext_resource type="Texture2D" path="res://assets/fondos/sierra_3_cempasuchil.png" id="4_r"]
+[ext_resource type="PackedScene" uid="uid://2mliplafc3uu" path="res://scenes/personajes/Xochik.tscn" id="5_r"]
+[ext_resource type="PackedScene" uid="uid://b8nduubajhyl7" path="res://scenes/personajes/Chicomexochitl.tscn" id="6_r"]
+[ext_resource type="PackedScene" uid="uid://dsohss617q4dj" path="res://scenes/personajes/chaneque.tscn" id="7_r"]
+[ext_resource type="PackedScene" path="res://scenes/objeto_ofrenda.tscn" id="8_r"]
+[ext_resource type="PackedScene" path="res://scenes/escondite.tscn" id="9_r"]
+[ext_resource type="PackedScene" path="res://scenes/plataforma.tscn" id="10_r"]
+[ext_resource type="Script" path="res://script/agua.gd" id="11_r"]
+[ext_resource type="Texture2D" uid="uid://cb1n100qh4ce2" path="res://assets/objetos/vela2.png" id="12_r"]
+[ext_resource type="Texture2D" uid="uid://db24rsa2a3ihc" path="res://assets/objetos/flor_cempasuchil.png" id="13_r"]
+[ext_resource type="Texture2D" uid="uid://bodpu73f5uhdv" path="res://assets/objetos/copal.png" id="14_r"]
+[ext_resource type="Texture2D" uid="uid://buiru4pr2l80t" path="res://assets/objetos/petalos.png" id="15_r"]
+[ext_resource type="Texture2D" path="res://assets/plataformas/roca_ancha.png" id="16_r"]
+[ext_resource type="Texture2D" path="res://assets/plataformas/roca_chica.png" id="17_r"]
+[ext_resource type="Texture2D" path="res://assets/plataformas/tronco.png" id="18_r"]
+[ext_resource type="Texture2D" path="res://assets/plataformas/piedra_rio.png" id="19_r"]
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_hgy67"]
-size = Vector2(1152, 40)
+[sub_resource type="RectangleShape2D" id="Rect_1"]
+size = Vector2(2871, 40)
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_xglk0"]
-size = Vector2(40, 800)
+[sub_resource type="RectangleShape2D" id="Rect_2"]
+size = Vector2(349, 40)
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_7uhor"]
-size = Vector2(40, 800)
+[sub_resource type="RectangleShape2D" id="Rect_3"]
+size = Vector2(40, 900)
 
-[node name="Nivel1Sierra" type="Node2D" unique_id=945253347]
-script = ExtResource("1_a64pu")
+[sub_resource type="RectangleShape2D" id="Rect_4"]
+size = Vector2(256, 60)
 
-[node name="Fondo" type="Sprite2D" parent="." unique_id=598846160]
+[node name="Nivel1Sierra" type="Node2D"]
+script = ExtResource("1_r")
+
+[node name="Fondo1" type="Sprite2D" parent="."]
 z_index = -10
+texture_filter = 1
+position = Vector2(0, 0)
 scale = Vector2(0.844, 0.844)
-texture = ExtResource("2_lthpk")
+texture = ExtResource("2_r")
 centered = false
 
-[node name="Suelo" type="StaticBody2D" parent="." unique_id=752122026]
-position = Vector2(576, 580)
+[node name="Fondo2" type="Sprite2D" parent="."]
+z_index = -10
+texture_filter = 1
+position = Vector2(1152, 0)
+scale = Vector2(0.844, 0.844)
+texture = ExtResource("3_r")
+centered = false
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Suelo" unique_id=1701271631]
-shape = SubResource("RectangleShape2D_hgy67")
+[node name="Fondo3" type="Sprite2D" parent="."]
+z_index = -10
+texture_filter = 1
+position = Vector2(2304, 0)
+scale = Vector2(0.844, 0.844)
+texture = ExtResource("4_r")
+centered = false
 
-[node name="ParedIzq" type="CollisionShape2D" parent="Suelo" unique_id=1217428556]
-position = Vector2(-576, -300)
-shape = SubResource("RectangleShape2D_xglk0")
+[node name="Suelo" type="StaticBody2D" parent="."]
 
-[node name="ParedDer" type="CollisionShape2D" parent="Suelo" unique_id=143034594]
-position = Vector2(596, -300)
-shape = SubResource("RectangleShape2D_7uhor")
+[node name="Tramo1" type="CollisionShape2D" parent="Suelo"]
+position = Vector2(1435.5, 580)
+shape = SubResource("Rect_1")
 
-[node name="Xochik" parent="." unique_id=509951126 instance=ExtResource("3_tvjvc")]
-position = Vector2(120, 480)
+[node name="Tramo2" type="CollisionShape2D" parent="Suelo"]
+position = Vector2(3281.5, 580)
+shape = SubResource("Rect_2")
 
-[node name="Chicomexochitl" parent="." unique_id=894604400 instance=ExtResource("4_fnkpx")]
-position = Vector2(200, 400)
+[node name="ParedIzq" type="CollisionShape2D" parent="Suelo"]
+position = Vector2(-20, 200)
+shape = SubResource("Rect_3")
 
-[node name="PuntoControl" parent="." unique_id=1220790569 instance=ExtResource("5_8fyhb")]
-position = Vector2(100, 470)
+[node name="ParedDer" type="CollisionShape2D" parent="Suelo"]
+position = Vector2(3476, 200)
+shape = SubResource("Rect_3")
 
-[node name="Chaneque" parent="." unique_id=1483246434 instance=ExtResource("6_dmm6d")]
-position = Vector2(520, 495)
-distancia_patrulla = 150.0
+[node name="Arroyo" type="Area2D" parent="."]
+position = Vector2(2989.0, 620)
+script = ExtResource("11_r")
 
-[node name="Chaneque2" parent="." unique_id=1658484219 instance=ExtResource("6_dmm6d")]
-position = Vector2(900, 495)
-distancia_patrulla = 140.0
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Arroyo"]
+shape = SubResource("Rect_4")
 
-[node name="ObjetoOfrenda" parent="." unique_id=1575502018 instance=ExtResource("7_fnkpx")]
-position = Vector2(960, 510)
-textura = ExtResource("8_p3xlf")
-reaparece = false
+[node name="Xochik" parent="." instance=ExtResource("5_r")]
+position = Vector2(110, 480)
 
-[node name="ObjetoOfrenda2" parent="." unique_id=1680060962 instance=ExtResource("7_fnkpx")]
-position = Vector2(600, 510)
-tipo = "flor"
-textura = ExtResource("9_0hn0m")
-reaparece = false
+[node name="Chicomexochitl" parent="." instance=ExtResource("6_r")]
+position = Vector2(190, 400)
 
-[node name="ObjetoOfrenda3" parent="." unique_id=404243869 instance=ExtResource("7_fnkpx")]
-position = Vector2(250, 510)
+[node name="P1_Roca1" parent="." instance=ExtResource("10_r")]
+position = Vector2(760, 525)
+textura = ExtResource("16_r")
+escala = 1.0
+tamano_colision = Vector2(112, 14)
+ajuste_colision_y = -3
+flote = 0.0
+
+[node name="P1_Roca2" parent="." instance=ExtResource("10_r")]
+position = Vector2(880, 479)
+textura = ExtResource("17_r")
+escala = 1.0
+tamano_colision = Vector2(64, 14)
+ajuste_colision_y = -2
+flote = 0.0
+
+[node name="Copal1" parent="." instance=ExtResource("8_r")]
+position = Vector2(880, 410)
 tipo = "copal"
-textura = ExtResource("10_go21x")
-reaparece = true
-
-[node name="ObjetoOfrenda4" parent="." unique_id=2069936145 instance=ExtResource("7_fnkpx")]
-position = Vector2(1090, 510)
-tipo = "petalos"
-textura = ExtResource("11_67kyt")
+textura = ExtResource("14_r")
 reaparece = false
 
-[node name="ArbustoSierra1" parent="." instance=ExtResource("12_escon")]
-position = Vector2(440, 510)
+[node name="P2_RocaCopal" parent="." instance=ExtResource("10_r")]
+position = Vector2(1292, 525)
+textura = ExtResource("16_r")
+escala = 1.0
+tamano_colision = Vector2(112, 14)
+ajuste_colision_y = -3
+flote = 0.0
 
-[node name="ArbustoSierra2" parent="." instance=ExtResource("12_escon")]
-position = Vector2(815, 510)
+[node name="Copal2" parent="." instance=ExtResource("8_r")]
+position = Vector2(1292, 455)
+tipo = "copal"
+textura = ExtResource("14_r")
+reaparece = false
 
-[node name="ArbustoSierra3" parent="." instance=ExtResource("12_escon")]
-position = Vector2(1060, 510)
+[node name="P2_Arbusto1" parent="." instance=ExtResource("9_r")]
+position = Vector2(1482, 510)
+
+[node name="P2_Chaneque1" parent="." instance=ExtResource("7_r")]
+position = Vector2(1622, 495)
+distancia_patrulla = 170
+
+[node name="P2_Tronco" parent="." instance=ExtResource("10_r")]
+position = Vector2(1792, 527)
+textura = ExtResource("18_r")
+escala = 1.0
+tamano_colision = Vector2(160, 14)
+ajuste_colision_y = -5
+flote = 0.0
+
+[node name="P2_Roca1" parent="." instance=ExtResource("10_r")]
+position = Vector2(1932, 480)
+textura = ExtResource("16_r")
+escala = 1.0
+tamano_colision = Vector2(112, 14)
+ajuste_colision_y = -3
+flote = 0.0
+
+[node name="P2_Roca2" parent="." instance=ExtResource("10_r")]
+position = Vector2(1832, 434)
+textura = ExtResource("17_r")
+escala = 1.0
+tamano_colision = Vector2(64, 14)
+ajuste_colision_y = -2
+flote = 0.0
+
+[node name="Flor" parent="." instance=ExtResource("8_r")]
+position = Vector2(1832, 365)
+tipo = "flor"
+textura = ExtResource("13_r")
+reaparece = false
+
+[node name="P2_Arbusto2" parent="." instance=ExtResource("9_r")]
+position = Vector2(2012, 510)
+
+[node name="P2_Chaneque2" parent="." instance=ExtResource("7_r")]
+position = Vector2(2112, 495)
+distancia_patrulla = 140
+
+[node name="Vela" parent="." instance=ExtResource("8_r")]
+position = Vector2(2162, 510)
+tipo = "vela"
+textura = ExtResource("12_r")
+reaparece = false
+
+[node name="P2_Arbusto3" parent="." instance=ExtResource("9_r")]
+position = Vector2(2242, 510)
+
+[node name="P3_Arbusto1" parent="." instance=ExtResource("9_r")]
+position = Vector2(2474, 510)
+
+[node name="P3_Chaneque1" parent="." instance=ExtResource("7_r")]
+position = Vector2(2684, 495)
+distancia_patrulla = 160
+
+[node name="P3_Arbusto2" parent="." instance=ExtResource("9_r")]
+position = Vector2(2824, 510)
+
+[node name="P3_Piedra1" parent="." instance=ExtResource("10_r")]
+position = Vector2(2921, 554)
+textura = ExtResource("19_r")
+escala = 1.0
+tamano_colision = Vector2(50, 14)
+ajuste_colision_y = -7
+flote = 3.0
+
+[node name="P3_Piedra2" parent="." instance=ExtResource("10_r")]
+position = Vector2(2989, 554)
+textura = ExtResource("19_r")
+escala = 1.0
+tamano_colision = Vector2(50, 14)
+ajuste_colision_y = -7
+flote = 3.0
+
+[node name="P3_Piedra3" parent="." instance=ExtResource("10_r")]
+position = Vector2(3057, 554)
+textura = ExtResource("19_r")
+escala = 1.0
+tamano_colision = Vector2(50, 14)
+ajuste_colision_y = -7
+flote = 3.0
+
+[node name="Petalos" parent="." instance=ExtResource("8_r")]
+position = Vector2(2989, 480)
+tipo = "petalos"
+textura = ExtResource("15_r")
+reaparece = false

@@ -26,6 +26,14 @@ signal recogido(objeto: ObjetoOfrenda)
 @onready var sprite: Sprite2D = $Sprite2D
 @onready var aviso: Label = $Aviso
 
+const NOMBRES := {
+	"vela": "Vela de la ofrenda",
+	"flor": "Flor de cempasúchil",
+	"copal": "Copal",
+	"petalos": "Pétalos de cempasúchil",
+}
+
+var _halo: Sprite2D
 var _jugador_cerca := false
 var _recogido := false
 var _t := 0.0
@@ -37,6 +45,8 @@ func _ready() -> void:
 	if Engine.is_editor_hint():
 		return
 	add_to_group("recolectable")
+	aviso.text = "[E] " + NOMBRES.get(tipo, "Recoger")
+	_crear_halo()
 	_t = randf() * TAU  # para que no floten todos sincronizados
 	body_entered.connect(_on_body_entered)
 	body_exited.connect(_on_body_exited)
@@ -50,6 +60,8 @@ func _process(delta: float) -> void:
 	sprite.position.y = sin(_t * 2.0) * 3.0
 	var brillo := 0.85 + sin(_t * 3.0) * 0.15
 	sprite.modulate = Color(brillo, brillo, brillo)
+	if _halo:
+		_halo.modulate.a = 0.25 + sin(_t * 3.0) * 0.12
 	var jugador = get_tree().get_first_node_in_group("jugador")
 	if jugador and jugador.get("atrapada"):
 		return
@@ -80,6 +92,7 @@ func recoger() -> void:
 	aviso.visible = false
 	set_deferred("monitoring", false)
 	recogido.emit(self)
+	Juego.sfx("recoger", -2.0)
 
 	if ruido_al_recoger > 0.0:
 		for c in get_tree().get_nodes_in_group("chaneques"):
@@ -104,3 +117,23 @@ func reaparecer() -> void:
 	show()
 	set_deferred("monitoring", true)
 	create_tween().tween_property(sprite, "modulate:a", 1.0, 0.6)
+
+
+## Resplandor suave detrás del objeto: en escala de grises, pero se distingue en la penumbra
+func _crear_halo() -> void:
+	var grad := Gradient.new()
+	grad.set_color(0, Color(1, 1, 1, 0.9))
+	grad.set_color(1, Color(1, 1, 1, 0.0))
+	var tex := GradientTexture2D.new()
+	tex.gradient = grad
+	tex.fill = GradientTexture2D.FILL_RADIAL
+	tex.fill_from = Vector2(0.5, 0.5)
+	tex.fill_to = Vector2(1.0, 0.5)
+	tex.width = 96
+	tex.height = 96
+	_halo = Sprite2D.new()
+	_halo.texture = tex
+	_halo.show_behind_parent = true
+	_halo.modulate.a = 0.3
+	sprite.add_child(_halo)
+	_halo.scale = Vector2.ONE / maxf(escala, 0.01)

@@ -34,6 +34,7 @@ func _process(delta: float) -> void:
 func _al_entrar(b: Node) -> void:
 	if b.is_in_group("jugador"):
 		b.en_escondite = true
+		Juego.sfx("escondite", -6.0)
 		_jugador = b
 
 
