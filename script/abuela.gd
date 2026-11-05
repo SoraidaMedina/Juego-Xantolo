@@ -71,7 +71,7 @@ func decir(mensajes: PackedStringArray) -> void:
 			var f := create_tween()
 			f.tween_property(_texto, "modulate:a", 0.0, 0.25)
 			await f.finished
-			await get_tree().create_timer(0.2).timeout
+			await get_tree().create_timer(0.2, false).timeout
 			_texto.modulate.a = 1.0
 
 	_hablando = false
@@ -105,7 +105,7 @@ func _escribir(txt: String) -> void:
 			espera += pausa_punto
 		elif c == "\n":
 			espera += pausa_coma
-		await get_tree().create_timer(espera).timeout
+		await get_tree().create_timer(espera, false).timeout
 	_texto.visible_characters = -1
 	_saltar = false
 	anim.play("idle")
@@ -114,7 +114,7 @@ func _escribir(txt: String) -> void:
 
 func _esperar(seg: float) -> void:
 	# Medio segundo de gracia para que un E de "saltar texto" no se salte también el mensaje
-	await get_tree().create_timer(0.3).timeout
+	await get_tree().create_timer(0.3, false).timeout
 	_saltar = false
 	var t := 0.0
 	while t < seg and not _saltar:

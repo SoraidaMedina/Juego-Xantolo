@@ -152,7 +152,7 @@ func _victoria() -> void:
 	a.tween_property(negro, "color:a", 1.0, 1.2)
 	await a.finished
 	_mostrar_mensaje("Xochik cruzó el monte por dentro de la cueva…", 0.0)
-	await get_tree().create_timer(3.0).timeout
+	await get_tree().create_timer(3.0, false).timeout
 	# Del otro lado: amanece
 	if _luz:
 		_luz.energy = 0.0
@@ -161,16 +161,14 @@ func _victoria() -> void:
 	var b := create_tween().set_parallel(true)
 	b.tween_property(negro, "color:a", 0.0, 2.5)
 	b.tween_property(_oscuro, "color", Color(1.0, 0.92, 0.85), 4.0)
-	await get_tree().create_timer(5.0).timeout
-	if siguiente_nivel != "":
-		get_tree().change_scene_to_file(siguiente_nivel)
+	await get_tree().create_timer(5.0, false).timeout
+	Juego.ir_a(siguiente_nivel)  # vacío = siguiente nivel de la lista
 
 
 func _game_over() -> void:
 	_terminado = true
-	_mostrar_mensaje("El Nahual te encontró…\nIntenta de nuevo", 0.0)
-	await get_tree().create_timer(2.5).timeout
-	get_tree().reload_current_scene()
+	await get_tree().create_timer(1.0, false).timeout
+	Juego.game_over("El Nahual te encontró…")
 
 
 # ---------- Tutorial ----------
@@ -184,12 +182,12 @@ func _tutorial() -> void:
 		await get_tree().process_frame
 		await abuela.decir(lista)
 	else:
-		await get_tree().create_timer(0.5).timeout
+		await get_tree().create_timer(0.5, false).timeout
 		for m in mensajes_tutorial:
 			if _terminado:
 				return
 			_mostrar_mensaje(_teclas(m), segundos_por_mensaje)
-			await get_tree().create_timer(segundos_por_mensaje + 1.2).timeout
+			await get_tree().create_timer(segundos_por_mensaje + 1.2, false).timeout
 	_caer_la_noche()
 
 
@@ -313,7 +311,7 @@ func _mostrar_mensaje(txt: String, duracion: float) -> void:
 	_mensaje.modulate.a = 1.0
 	_mensaje.visible = true
 	if duracion > 0.0:
-		await get_tree().create_timer(duracion).timeout
+		await get_tree().create_timer(duracion, false).timeout
 		if not _terminado:
 			var tw := create_tween()
 			tw.tween_property(_mensaje, "modulate:a", 0.0, 1.0)

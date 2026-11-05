@@ -152,7 +152,7 @@ func _cazar(j: CharacterBody2D) -> void:
 	await tw.finished
 	anim.speed_scale = 1.0
 	j.ser_atrapada()
-	await get_tree().create_timer(0.6).timeout
+	await get_tree().create_timer(0.6, false).timeout
 	# Se transforma y desaparece en la oscuridad; reaparece en su zona
 	_icono.visible = false
 	_play(["disappear"])
@@ -160,7 +160,7 @@ func _cazar(j: CharacterBody2D) -> void:
 	fuera.tween_property(anim, "modulate:a", 0.0, 0.8)
 	await fuera.finished
 	global_position.x = inicio_x
-	await get_tree().create_timer(1.0).timeout
+	await get_tree().create_timer(1.0, false).timeout
 	var dentro := create_tween()
 	dentro.tween_property(anim, "modulate:a", 1.0, 0.8)
 	await dentro.finished

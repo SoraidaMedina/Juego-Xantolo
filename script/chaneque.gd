@@ -1,72 +1,100 @@
 extends CharacterBody2D
-## Chaneque — presencia traviesa que reacciona al RUIDO.
-## Si Xochik se mueve o salta cerca, el chaneque empieza a sospechar.
-## Si la sospecha se llena, la atrapa (regresa al punto de reaparición).
-## Quedarse quieta o agachada = silencio. El copal lo dispersa un rato.
+## Chaneque — presencia traviesa de la Sierra (nivel 1), según el documento técnico:
+## · Aparece y desaparece entre los árboles: ratos visible, ratos se esfuma riendo.
+## · Reacciona al RUIDO: caminar normal hace ruido, saltar o caer hace MUCHO ruido.
+##   Agachada (quieta o caminando despacio) = silencio.
+## · Si te quedas a la vista y muy cerca demasiado tiempo, también te nota (más lento).
+## · Cuando la sospecha se llena ríe, avisa a los cercanos (atacan en grupo) y corre hacia ti.
+## · Escondida en un arbusto o quemando copal [Q] estás a salvo.
+## · Ya no quita vida con solo tocarte: primero tiene que descubrirte.
 
-@export var velocidad: float = 60.0
-@export var distancia_patrulla: float = 200.0
-## Distancia a la que escucha los pasos de Xochik
-@export var rango_oido: float = 180.0
-## Segundos de ruido continuo antes de atraparla
-@export var tiempo_para_detectar: float = 1.2
-## Segundos que tarda en volver después del copal
+@export var velocidad: float = 55.0
+@export var velocidad_persecucion: float = 135.0
+@export var distancia_patrulla: float = 160.0
+## Distancia a la que oye pasos normales (saltar la multiplica x1.6)
+@export var rango_oido: float = 170.0
+## Segundos de ruido continuo antes de descubrirte
+@export var tiempo_para_detectar: float = 1.4
+## Segundos que te persigue antes de rendirse
+@export var tiempo_persecucion: float = 3.0
+@export var rango_contacto: float = 42.0
+## Segundos fuera después del copal
 @export var tiempo_dispersado: float = 6.0
-## Distancia a la que el chaneque la "toca" y la atrapa aunque esté quieta
-@export var rango_contacto: float = 60.0
+## Ciclo de aparecer / desaparecer (segundos, al azar entre min y max)
+@export var tiempo_visible_min: float = 6.0
+@export var tiempo_visible_max: float = 10.0
+@export var tiempo_oculto_min: float = 2.5
+@export var tiempo_oculto_max: float = 4.5
+## Radio en el que avisa a otros chaneques cuando te descubre
+@export var rango_grupo: float = 450.0
+## Qué tan rápido sube la sospecha si estás quieta, a la vista y muy cerca (0 = nunca)
+@export var factor_quieta: float = 0.25
 
 var gravedad: float = ProjectSettings.get_setting("physics/2d/default_gravity")
 @onready var anim: AnimatedSprite2D = $AnimatedSprite2D
 
 var inicio_x: float
 var dir: float = 1.0
-var estado: String = "patrulla"   # patrulla | alerta | riendo | dispersado
+## patrulla | alerta | persigue | riendo | oculto | dispersado
+var estado: String = "patrulla"
 var sospecha: float = 0.0
+var _t: float = 0.0
+var _t_persecucion: float = 0.0
+var _gen: int = 0            # invalida esperas viejas si cambia de estado
 var _icono: Label
 
 
 func _ready() -> void:
 	add_to_group("chaneques")
 	inicio_x = global_position.x
+	dir = 1.0 if randf() < 0.5 else -1.0
+	_t = randf_range(tiempo_visible_min, tiempo_visible_max)
 	_icono = Label.new()
-	_icono.add_theme_font_size_override("font_size", 20)
+	_icono.add_theme_font_size_override("font_size", 22)
 	_icono.add_theme_color_override("font_outline_color", Color.BLACK)
-	_icono.add_theme_constant_override("outline_size", 5)
-	_icono.position = Vector2(-6, -80)
+	_icono.add_theme_constant_override("outline_size", 6)
+	_icono.position = Vector2(-6, -84)
 	_icono.visible = false
 	add_child(_icono)
+	# Atraviesa a Xochik: solo la daña si la descubrió
+	await get_tree().process_frame
+	var j := get_tree().get_first_node_in_group("jugador") as PhysicsBody2D
+	if j:
+		add_collision_exception_with(j)
 
 
 func _physics_process(delta: float) -> void:
 	if not is_on_floor():
 		velocity.y += gravedad * delta
+	var j := get_tree().get_first_node_in_group("jugador") as CharacterBody2D
+	var activo := _nivel_activo()
+	_t -= delta
 
 	match estado:
 		"patrulla":
 			_patrullar()
-			_escuchar_jugador(delta)
+			if activo:
+				_escuchar(j, delta)
+			if estado == "patrulla" and _t <= 0.0 and sospecha <= 0.0:
+				_desvanecer(randf_range(tiempo_oculto_min, tiempo_oculto_max), "oculto")
 		"alerta":
 			velocity.x = 0.0
-			_escuchar_jugador(delta)
+			_escuchar(j, delta)
+		"persigue":
+			_perseguir(j, delta)
 		_:
 			velocity.x = 0.0
 
 	move_and_slide()
-	_revisar_choque()
 
 
-## Si el chaneque choca físicamente con Xochik, la atrapa (aunque esté quieta)
-func _revisar_choque() -> void:
-	if estado != "patrulla" and estado != "alerta":
-		return
-	for i in get_slide_collision_count():
-		var otro = get_slide_collision(i).get_collider()
-		if otro and otro.is_in_group("jugador") and not otro.get("atrapada"):
-			_atrapar(otro)
-			return
+func _nivel_activo() -> bool:
+	var nivel = get_tree().get_first_node_in_group("nivel")
+	return nivel == null or nivel.get("_jugando") != false
 
 
 func _patrullar() -> void:
+	anim.speed_scale = 1.0
 	velocity.x = dir * velocidad
 	if global_position.x > inicio_x + distancia_patrulla:
 		dir = -1.0
@@ -78,49 +106,41 @@ func _patrullar() -> void:
 	_play("walk")
 
 
-func _escuchar_jugador(delta: float) -> void:
-	var jugador := get_tree().get_first_node_in_group("jugador") as CharacterBody2D
-	if jugador == null or jugador.get("atrapada"):
-		sospecha = 0.0
-		return
+# ---------- Oído ----------
 
-	var distancia := global_position.distance_to(jugador.global_position)
-	var dx := absf(jugador.global_position.x - global_position.x)
-	var dy := absf(jugador.global_position.y - global_position.y)
-	if dx < rango_contacto and dy < 80.0:
-		_atrapar(jugador)
+func _escuchar(j: CharacterBody2D, delta: float) -> void:
+	if j == null or j.atrapada or j.esta_escondida():
+		_bajar_sospecha(delta)
 		return
-	var cerca := distancia < rango_oido
-	var hace_ruido := absf(jugador.velocity.x) > 10.0 or not jugador.is_on_floor()
+	var dist := global_position.distance_to(j.global_position)
+	var ruido: float = j.nivel_ruido() if j.has_method("nivel_ruido") else (1.0 if absf(j.velocity.x) > 10.0 else 0.0)
+	var sube := 0.0
+	if ruido > 0.0 and dist < rango_oido * ruido:
+		sube = 1.0
+	elif dist < rango_oido * 0.45:
+		sube = factor_quieta   # quieta, pero demasiado cerca y a la vista
 
-	if cerca and hace_ruido:
-		sospecha += delta
-		if estado == "patrulla":
-			estado = "alerta"
-		_mostrar_icono("?")
-		anim.flip_h = jugador.global_position.x < global_position.x
-		_play("cry")
-		if sospecha >= tiempo_para_detectar:
-			_atrapar(jugador)
-	else:
-		# Si Xochik se queda quieta, la sospecha baja y vuelve a patrullar
-		sospecha = maxf(sospecha - delta * 0.8, 0.0)
-		if estado == "alerta" and sospecha == 0.0:
+	if sube <= 0.0:
+		_bajar_sospecha(delta)
+		return
+	sospecha += delta * sube
+	if estado == "patrulla":
+		estado = "alerta"
+	anim.flip_h = j.global_position.x < global_position.x
+	_play("cry")
+	_mostrar_icono("?", Color(0.85, 0.85, 0.85))
+	_icono.modulate.a = 0.4 + 0.6 * clampf(sospecha / tiempo_para_detectar, 0.0, 1.0)
+	if sospecha >= tiempo_para_detectar:
+		_descubrir(j, true)
+
+
+func _bajar_sospecha(delta: float) -> void:
+	sospecha = maxf(sospecha - delta * 0.7, 0.0)
+	if estado == "alerta":
+		_icono.modulate.a = 0.4 + 0.6 * clampf(sospecha / tiempo_para_detectar, 0.0, 1.0)
+		if sospecha == 0.0:
 			estado = "patrulla"
 			_icono.visible = false
-
-
-func _atrapar(jugador: Node) -> void:
-	estado = "riendo"
-	sospecha = 0.0
-	_mostrar_icono("!")
-	if jugador.has_method("ser_atrapada"):
-		jugador.ser_atrapada()
-	_play("cry")
-	await get_tree().create_timer(1.5).timeout
-	_icono.visible = false
-	if estado == "riendo":
-		estado = "patrulla"
 
 
 ## Lo llaman los objetos al recogerse (si tienen ruido_al_recoger > 0)
@@ -129,35 +149,131 @@ func escuchar_ruido(pos: Vector2) -> void:
 		return
 	estado = "alerta"
 	sospecha += tiempo_para_detectar * 0.4
-	_mostrar_icono("?")
+	_mostrar_icono("?", Color(0.85, 0.85, 0.85))
 	anim.flip_h = pos.x < global_position.x
 	_play("cry")
 
 
+# ---------- Persecución ----------
+
+func _descubrir(j: CharacterBody2D, avisar: bool) -> void:
+	estado = "persigue"
+	sospecha = 0.0
+	_t_persecucion = tiempo_persecucion
+	_mostrar_icono("!", Color.WHITE)
+	_play("cry")
+	if avisar:
+		# Atacan en grupo: los que están cerca también vienen
+		for c in get_tree().get_nodes_in_group("chaneques"):
+			if c != self and c.has_method("unirse") and c.global_position.distance_to(global_position) <= rango_grupo:
+				c.unirse(j)
+
+
+## Otro chaneque descubrió a Xochik y llama a este
+func unirse(j: CharacterBody2D) -> void:
+	if estado == "patrulla" or estado == "alerta":
+		_descubrir(j, false)
+
+
+func _perseguir(j: CharacterBody2D, delta: float) -> void:
+	_t_persecucion -= delta
+	if j == null or j.atrapada:
+		_calmarse()
+		return
+	if j.esta_escondida():
+		# La perdió de vista: se queda olfateando
+		estado = "alerta"
+		sospecha = tiempo_para_detectar * 0.5
+		_mostrar_icono("?", Color(0.85, 0.85, 0.85))
+		return
+	var dx := j.global_position.x - global_position.x
+	var dy := absf(j.global_position.y - global_position.y)
+	dir = signf(dx) if dx != 0.0 else dir
+	velocity.x = dir * velocidad_persecucion
+	anim.flip_h = dir < 0
+	anim.speed_scale = 1.8
+	_play("walk")
+	if absf(dx) < rango_contacto and dy < 90.0:
+		_atrapar(j)
+	elif _t_persecucion <= 0.0:
+		_calmarse()
+
+
+func _calmarse() -> void:
+	estado = "patrulla"
+	sospecha = 0.0
+	anim.speed_scale = 1.0
+	_icono.visible = false
+
+
+func _atrapar(j: CharacterBody2D) -> void:
+	estado = "riendo"
+	velocity.x = 0.0
+	anim.speed_scale = 1.0
+	_mostrar_icono("!", Color.WHITE)
+	_play("cry")
+	j.ser_atrapada("Los chaneques te atraparon")
+	var gen := _gen
+	await get_tree().create_timer(1.2, false).timeout
+	if gen == _gen and estado == "riendo":
+		# Se esfuma riendo y reaparece en su zona
+		_desvanecer(randf_range(tiempo_oculto_min, tiempo_oculto_max) + 1.0, "oculto")
+
+
+# ---------- Aparecer / desaparecer ----------
+
 ## Lo llama el nivel cuando Xochik usa copal [Q]
 func dispersar() -> void:
-	if estado == "dispersado":
+	if estado == "oculto" or estado == "dispersado":
 		return
-	estado = "dispersado"
+	_desvanecer(tiempo_dispersado, "dispersado")
+
+
+func _desvanecer(espera: float, nuevo_estado: String) -> void:
+	_gen += 1
+	var gen := _gen
+	estado = nuevo_estado
 	sospecha = 0.0
+	velocity.x = 0.0
+	anim.speed_scale = 1.0
 	_icono.visible = false
 	$CollisionShape2D.set_deferred("disabled", true)
 	_play("disappear")
-	var tw := create_tween()
-	tw.tween_property(anim, "modulate:a", 0.0, 0.8)
-	await tw.finished
-	await get_tree().create_timer(tiempo_dispersado).timeout
-	global_position.x = inicio_x
+	var fuera := create_tween()
+	fuera.tween_property(anim, "modulate:a", 0.0, 0.6)
+	await fuera.finished
+	await get_tree().create_timer(espera, false).timeout
+	if gen != _gen:
+		return
+	_elegir_punto_aparicion()
 	$CollisionShape2D.set_deferred("disabled", false)
-	var vuelta := create_tween()
-	vuelta.tween_property(anim, "modulate:a", 1.0, 0.8)
-	await vuelta.finished
+	_play("idle")
+	var dentro := create_tween()
+	dentro.tween_property(anim, "modulate:a", 1.0, 0.8)
+	await dentro.finished
+	if gen != _gen:
+		return
 	estado = "patrulla"
+	_t = randf_range(tiempo_visible_min, tiempo_visible_max)
 
 
-func _mostrar_icono(txt: String) -> void:
+## Reaparece en otro punto de su zona, pero nunca encima de Xochik
+func _elegir_punto_aparicion() -> void:
+	var j := get_tree().get_first_node_in_group("jugador") as Node2D
+	var x := inicio_x
+	for intento in 6:
+		x = inicio_x + randf_range(-distancia_patrulla, distancia_patrulla)
+		if j == null or absf(x - j.global_position.x) > 160.0:
+			break
+	global_position.x = x
+	dir = 1.0 if randf() < 0.5 else -1.0
+
+
+# ---------- Utilidades ----------
+
+func _mostrar_icono(txt: String, color: Color) -> void:
 	_icono.text = txt
-	_icono.modulate = Color(1.0, 0.85, 0.55) if txt == "?" else Color(1.0, 0.4, 0.4)
+	_icono.modulate = color
 	_icono.visible = true
 
 

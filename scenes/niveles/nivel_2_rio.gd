@@ -67,12 +67,12 @@ func _tutorial() -> void:
 		return
 	if pista_inicial.strip_edges() != "":
 		_mostrar_mensaje(_teclas(pista_inicial), 5.0)
-		await get_tree().create_timer(5.5).timeout
+		await get_tree().create_timer(5.5, false).timeout
 	for m in mensajes_tutorial:
 		if _terminado:
 			return
 		_mostrar_mensaje(_teclas(m), segundos_por_mensaje)
-		await get_tree().create_timer(segundos_por_mensaje + 1.2).timeout
+		await get_tree().create_timer(segundos_por_mensaje + 1.2, false).timeout
 
 
 func _process(_delta: float) -> void:
@@ -112,16 +112,14 @@ func _configurar_camara() -> void:
 func _victoria() -> void:
 	_terminado = true
 	_mostrar_mensaje("La Llorona reconoce a sus hijos...\nY por fin encuentra paz", 0.0)
-	await get_tree().create_timer(4.0).timeout
-	if siguiente_nivel != "":
-		get_tree().change_scene_to_file(siguiente_nivel)
+	await get_tree().create_timer(4.0, false).timeout
+	Juego.ir_a(siguiente_nivel)  # vacío = siguiente nivel de la lista
 
 
 func _game_over() -> void:
 	_terminado = true
-	_mostrar_mensaje("El llanto del río te alcanzó...\nIntenta de nuevo", 0.0)
-	await get_tree().create_timer(2.5).timeout
-	get_tree().reload_current_scene()
+	await get_tree().create_timer(1.0, false).timeout
+	Juego.game_over("El llanto del río te alcanzó…")
 
 
 # ---------- HUD ----------
@@ -190,7 +188,7 @@ func _mostrar_mensaje(txt: String, duracion: float) -> void:
 	_mensaje.modulate.a = 1.0
 	_mensaje.visible = true
 	if duracion > 0.0:
-		await get_tree().create_timer(duracion).timeout
+		await get_tree().create_timer(duracion, false).timeout
 		if not _terminado:
 			var tw := create_tween()
 			tw.tween_property(_mensaje, "modulate:a", 0.0, 1.0)

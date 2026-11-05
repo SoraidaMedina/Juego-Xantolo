@@ -171,7 +171,7 @@ func _encuentro(jugador: CharacterBody2D) -> void:
 		jugador.ocultar_mano()
 		obj.devolver()
 	jugador.ser_atrapada()
-	await get_tree().create_timer(1.8).timeout
+	await get_tree().create_timer(1.8, false).timeout
 	_icono.visible = false
 	if estado == "reaccion":
 		estado = "patrulla"
@@ -189,7 +189,7 @@ func _calmarse(jugador: CharacterBody2D, obj: Node) -> void:
 	anim.flip_h = jugador.global_position.x < global_position.x
 	_play("cry")
 	calmada.emit()
-	await get_tree().create_timer(2.5).timeout
+	await get_tree().create_timer(2.5, false).timeout
 	_play("disappear")
 	var tw := create_tween()
 	tw.tween_property(anim, "modulate:a", 0.0, 1.5)

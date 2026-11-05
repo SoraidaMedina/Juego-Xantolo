@@ -4,6 +4,11 @@ signal vidas_cambiadas(vidas: int)
 signal sin_vidas
 
 @export var velocidad: float = 150.0
+## Agachada camina despacio y en silencio (sigilo)
+@export var velocidad_agachada: float = 55.0
+## Anillo que muestra hasta dónde se oyen tus pasos (solo en niveles con chaneques)
+@export var mostrar_ruido: bool = true
+@export var radio_ruido: float = 170.0
 @export var fuerza_salto: float = -350.0
 @export var vidas_max: int = 3
 ## Actívalo en los niveles donde Xochik empieza mirando a la izquierda
@@ -24,6 +29,9 @@ var agachada: bool = false
 var en_escondite: bool = false
 var objeto_en_mano: Node = null   # pertenencia que carga (nivel 2)
 var _mano: Sprite2D
+var _ruido_caida := 0.0      # segundos de ruido fuerte al caer de un salto
+var _en_suelo_antes := true
+var _radio_visible := 0.0
 
 
 func _ready() -> void:
@@ -59,15 +67,36 @@ func _physics_process(delta: float) -> void:
 	if Input.is_action_just_pressed("saltar") and is_on_floor() and not agachada:
 		velocity.y = fuerza_salto
 
-	velocity.x = 0.0 if agachada else dir * velocidad
+	velocity.x = dir * (velocidad_agachada if agachada else velocidad)
 	move_and_slide()
+	if is_on_floor() and not _en_suelo_antes:
+		_ruido_caida = 0.35
+	_en_suelo_antes = is_on_floor()
+	_ruido_caida = maxf(_ruido_caida - delta, 0.0)
 	_actualizar_animacion(dir)
 
 	# Se oscurece cuando está escondida
 	anim.self_modulate = Color(0.45, 0.45, 0.5) if esta_escondida() else Color.WHITE
 
 
-func _process(_delta: float) -> void:
+## 0 = silencio (quieta o agachada) · 1 = pasos · 1.6 = saltar / caer
+func nivel_ruido() -> float:
+	if atrapada:
+		return 0.0
+	if _ruido_caida > 0.0 or not is_on_floor():
+		return 1.6
+	if agachada:
+		return 0.0
+	return 1.0 if absf(velocity.x) > 10.0 else 0.0
+
+
+func _process(delta: float) -> void:
+	# Anillo de ruido
+	var objetivo := 0.0
+	if mostrar_ruido and get_tree().has_group("chaneques"):
+		objetivo = nivel_ruido() * radio_ruido
+	_radio_visible = lerpf(_radio_visible, objetivo, 1.0 - exp(-8.0 * delta))
+	queue_redraw()
 	if _mano.visible:
 		_mano.position = Vector2(-offset_mano.x if anim.flip_h else offset_mano.x, offset_mano.y)
 		_mano.flip_h = anim.flip_h
@@ -84,6 +113,13 @@ func _actualizar_animacion(dir: float) -> void:
 		anim.play("walk")
 	else:
 		anim.play("idle")
+
+
+func _draw() -> void:
+	if _radio_visible < 6.0:
+		return
+	var a := clampf(_radio_visible / (radio_ruido * 1.6), 0.0, 1.0)
+	draw_arc(Vector2.ZERO, _radio_visible, 0.0, TAU, 64, Color(1, 1, 1, 0.10 + 0.12 * a), 2.0, true)
 
 
 func mostrar_en_mano(tex: Texture2D) -> void:
@@ -133,7 +169,7 @@ func ser_atrapada(motivo: String = "") -> void:
 	await salida.finished
 	global_position = punto_reaparicion
 	velocity = Vector2.ZERO
-	await get_tree().create_timer(0.3).timeout
+	await get_tree().create_timer(0.3, false).timeout
 	var entrada := create_tween()
 	entrada.tween_property(anim, "modulate:a", 1.0, 0.5)
 	await entrada.finished

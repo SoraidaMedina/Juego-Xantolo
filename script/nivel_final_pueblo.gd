@@ -5,7 +5,7 @@ extends Node2D
 ## Necesita: Fondo, Suelo, Xochik (con Camera2D) y una Meta (meta.tscn) sobre el altar
 ## con "Es Entrada" DESACTIVADO.
 
-@export_file("*.tscn") var escena_inicio: String = ""   # para "volver a jugar" (Nivel1Sierra)
+@export_file("*.tscn") var escena_inicio: String = ""   # vacío = volver al menú principal
 ## Imágenes que aparecen en el altar, en orden
 @export var objetos_ofrenda: PackedStringArray = [
 	"res://assets/objetos/vela1.png",
@@ -57,8 +57,9 @@ func _ready() -> void:
 
 
 func _process(_delta: float) -> void:
-	if _fin and Input.is_action_just_pressed("interactuar") and escena_inicio != "":
-		get_tree().change_scene_to_file(escena_inicio)
+	if _fin and Input.is_action_just_pressed("interactuar"):
+		_fin = false
+		Juego.ir_a(escena_inicio if escena_inicio != "" else Juego.MENU)
 
 
 # ---------- El ritual ----------
@@ -89,7 +90,7 @@ func _ritual(meta: Node2D) -> void:
 		var tw := create_tween().set_parallel(true)
 		tw.tween_property(s, "modulate:a", 1.0, 0.5)
 		tw.tween_property(s, "global_position:y", s.global_position.y - 12.0, 0.5)
-		await get_tree().create_timer(0.55).timeout
+		await get_tree().create_timer(0.55, false).timeout
 
 	# Luz cálida del altar
 	var luz := _crear_luz(_punto_altar(meta) + Vector2(0, -20))
@@ -168,10 +169,9 @@ func _mostrar_creditos() -> void:
 	_creditos.modulate.a = 0.0
 	_creditos.visible = true
 	create_tween().tween_property(_creditos, "modulate:a", 1.0, 2.0)
-	await get_tree().create_timer(3.0).timeout
-	if escena_inicio != "":
-		_ayuda.text = "[E] Volver a jugar"
-		_ayuda.visible = true
+	await get_tree().create_timer(3.0, false).timeout
+	_ayuda.text = "[E] Volver al menú"
+	_ayuda.visible = true
 	_fin = true
 
 
@@ -229,7 +229,7 @@ func _decir(txt: String, seg: float) -> void:
 	_mensaje.visible = true
 	var a := create_tween()
 	a.tween_property(_mensaje, "modulate:a", 1.0, 0.6)
-	await get_tree().create_timer(seg).timeout
+	await get_tree().create_timer(seg, false).timeout
 	var b := create_tween()
 	b.tween_property(_mensaje, "modulate:a", 0.0, 0.6)
 	await b.finished

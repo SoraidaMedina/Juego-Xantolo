@@ -55,17 +55,17 @@ func _hacer(nombre: String, duracion: float) -> void:
 		return
 	ocupada = true
 	anim.play(nombre)
-	await get_tree().create_timer(duracion).timeout
+	await get_tree().create_timer(duracion, false).timeout
 	ocupada = false
 
 
 ## Da la pista (animación "guide"), brilla y se desvanece hacia arriba
 func _despedirse() -> void:
 	_hacer("guide", tiempo_antes_de_irse)
-	await get_tree().create_timer(tiempo_antes_de_irse).timeout
+	await get_tree().create_timer(tiempo_antes_de_irse, false).timeout
 	ocupada = true
 	anim.play("light")
-	await get_tree().create_timer(0.6).timeout
+	await get_tree().create_timer(0.6, false).timeout
 	_yendose = true
 	var tw := create_tween()
 	tw.tween_property(self, "modulate:a", 0.0, 1.5)
