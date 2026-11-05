@@ -1,0 +1,75 @@
+[gd_scene format=3 uid="uid://b1hyj5ne7g141"]
+
+[ext_resource type="Script" uid="uid://cpaiqxy5nnne3" path="res://script/nahual.gd" id="1_7grur"]
+[ext_resource type="Texture2D" uid="uid://d0oybpu42djrs" path="res://assets/nahual/nahual_detect.png" id="2_tlpuf"]
+[ext_resource type="Texture2D" uid="uid://5bjsdl8i8rlk" path="res://assets/nahual/nahual_disappear01.png" id="3_1wxph"]
+[ext_resource type="Texture2D" uid="uid://cicodytnyjehp" path="res://assets/nahual/nahual_disappear02.png" id="4_mvgkf"]
+[ext_resource type="Texture2D" uid="uid://d3j4raqpnd7gn" path="res://assets/nahual/nahual_disappear03.png" id="5_umj14"]
+[ext_resource type="Texture2D" uid="uid://d0cctlpo17kgg" path="res://assets/nahual/nahual_disappear04.png" id="6_j4p5k"]
+[ext_resource type="Texture2D" uid="uid://oltspxdq0tof" path="res://assets/nahual/nahual_idle.png" id="7_n20dj"]
+[ext_resource type="Texture2D" uid="uid://b5oy1f6s7svw8" path="res://assets/nahual/nahual_walk01.png" id="8_7y4aw"]
+[ext_resource type="Texture2D" uid="uid://3wmngj3702cx" path="res://assets/nahual/nahual_walk02.png" id="9_dtqu0"]
+
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_7uhor"]
+radius = 22.0
+height = 160.0
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_xglk0"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("2_tlpuf")
+}],
+"loop": 0,
+"name": &"cry",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("3_1wxph")
+}, {
+"duration": 1.0,
+"texture": ExtResource("4_mvgkf")
+}, {
+"duration": 1.0,
+"texture": ExtResource("5_umj14")
+}, {
+"duration": 1.0,
+"texture": ExtResource("6_j4p5k")
+}],
+"loop": 0,
+"name": &"disappear",
+"speed": 6.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("7_n20dj")
+}],
+"loop": 1,
+"name": &"idle",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("8_7y4aw")
+}, {
+"duration": 1.0,
+"texture": ExtResource("9_dtqu0")
+}],
+"loop": 1,
+"name": &"walk",
+"speed": 4.0
+}]
+
+[node name="Nahual" type="CharacterBody2D" unique_id=553344950]
+script = ExtResource("1_7grur")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=898217271]
+position = Vector2(0, 1)
+shape = SubResource("CapsuleShape2D_7uhor")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1301201458]
+scale = Vector2(0.15, 0.15)
+sprite_frames = SubResource("SpriteFrames_xglk0")
+animation = &"idle"
+autoplay = "idle"

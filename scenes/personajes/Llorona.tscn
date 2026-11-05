@@ -1,0 +1,63 @@
+[gd_scene format=3 uid="uid://csrb1mu5rdba3"]
+
+[ext_resource type="Texture2D" uid="uid://mfssm2dds58l" path="res://assets/llorona/llorona_cry.png" id="1_abs3j"]
+[ext_resource type="Script" uid="uid://dlygp0peaiqic" path="res://script/enemigo_sigilo.gd" id="1_f5tjt"]
+[ext_resource type="Texture2D" uid="uid://gcwd5k2oalfk" path="res://assets/llorona/llorona_disappear.png" id="2_f5tjt"]
+[ext_resource type="Texture2D" uid="uid://v0x4loiiuqf6" path="res://assets/llorona/llorona_idle.png" id="3_0b7bi"]
+[ext_resource type="Texture2D" uid="uid://b83cwsc4o576v" path="res://assets/llorona/llorona_walk01.png" id="4_55f4o"]
+[ext_resource type="Texture2D" uid="uid://bnqn0fpov0seg" path="res://assets/llorona/llorona_walk02.png" id="5_r61q5"]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_7uhor"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("1_abs3j")
+}],
+"loop": 0,
+"name": &"cry",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("2_f5tjt")
+}],
+"loop": 0,
+"name": &"disappear",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("3_0b7bi")
+}],
+"loop": 1,
+"name": &"idle",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("4_55f4o")
+}, {
+"duration": 1.0,
+"texture": ExtResource("5_r61q5")
+}],
+"loop": 1,
+"name": &"walk",
+"speed": 4.0
+}]
+
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_mpg8l"]
+radius = 22.0
+height = 150.0
+
+[node name="Llorona" type="CharacterBody2D" unique_id=1874109392]
+script = ExtResource("1_f5tjt")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=224291851]
+scale = Vector2(0.15, 0.15)
+sprite_frames = SubResource("SpriteFrames_7uhor")
+animation = &"idle"
+autoplay = "idle"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1826507160]
+position = Vector2(0, 4)
+shape = SubResource("CapsuleShape2D_mpg8l")

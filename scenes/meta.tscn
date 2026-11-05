@@ -1,0 +1,14 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://script/meta.gd" id="1_meta"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_meta"]
+resource_local_to_scene = true
+size = Vector2(60, 160)
+
+[node name="Meta" type="Area2D"]
+script = ExtResource("1_meta")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_meta")
+debug_color = Color(1, 0.8, 0.3, 0.42)

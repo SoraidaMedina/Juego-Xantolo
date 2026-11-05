@@ -1,0 +1,27 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://script/pertenencia.gd" id="1_obj"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_obj"]
+radius = 28.0
+
+[node name="Pertenencia" type="Area2D"]
+script = ExtResource("1_obj")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture_filter = 1
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_obj")
+
+[node name="Aviso" type="Label" parent="."]
+visible = false
+offset_left = -70.0
+offset_top = -64.0
+offset_right = 70.0
+offset_bottom = -41.0
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 12
+text = "[E] Tomar"
+horizontal_alignment = 1

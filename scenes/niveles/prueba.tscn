@@ -1,0 +1,45 @@
+[gd_scene format=3 uid="uid://dahlrdo2sieey"]
+
+[ext_resource type="PackedScene" uid="uid://2mliplafc3uu" path="res://scenes/personajes/Xochik.tscn" id="1_pa7r8"]
+[ext_resource type="PackedScene" uid="uid://csrb1mu5rdba3" path="res://scenes/personajes/Llorona.tscn" id="2_aypyj"]
+[ext_resource type="PackedScene" uid="uid://dsohss617q4dj" path="res://scenes/personajes/chaneque.tscn" id="3_fdq2y"]
+[ext_resource type="PackedScene" uid="uid://b1hyj5ne7g141" path="res://scenes/personajes/Nahual.tscn" id="4_ngfxe"]
+[ext_resource type="PackedScene" uid="uid://b8nduubajhyl7" path="res://scenes/personajes/Chicomexochitl.tscn" id="5_0jy7x"]
+[ext_resource type="PackedScene" uid="uid://bxw3rif45c1f0" path="res://scenes/niveles/PuntoControl.tscn" id="6_pss0w"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_afpmv"]
+size = Vector2(1200, 40)
+
+[node name="Node2D" type="Node2D" unique_id=1360786608]
+
+[node name="StaticBody2D" type="StaticBody2D" parent="." unique_id=1348471477]
+position = Vector2(576, 500)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="StaticBody2D" unique_id=2140092930]
+shape = SubResource("RectangleShape2D_afpmv")
+
+[node name="ColorRect" type="ColorRect" parent="StaticBody2D" unique_id=1643417405]
+offset_left = -600.0
+offset_top = -20.0
+offset_right = 600.0
+offset_bottom = 20.0
+offset_transform_position = Vector2(-600, -20)
+color = Color(0.42745098, 0.5411765, 1, 1)
+
+[node name="Xochik" parent="." unique_id=509951126 instance=ExtResource("1_pa7r8")]
+position = Vector2(576, 380)
+
+[node name="Llorona" parent="." unique_id=1874109392 instance=ExtResource("2_aypyj")]
+position = Vector2(900, 380)
+
+[node name="Chaneque" parent="." unique_id=1483246434 instance=ExtResource("3_fdq2y")]
+position = Vector2(300, 380)
+
+[node name="Nahual" parent="." unique_id=553344950 instance=ExtResource("4_ngfxe")]
+position = Vector2(1000, 380)
+
+[node name="Chicomexochitl" parent="." unique_id=894604400 instance=ExtResource("5_0jy7x")]
+position = Vector2(686, 390)
+
+[node name="PuntoControl" parent="." unique_id=1220790569 instance=ExtResource("6_pss0w")]
+position = Vector2(150, 380)

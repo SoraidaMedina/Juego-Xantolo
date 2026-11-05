@@ -1,0 +1,13 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://script/escondite.gd" id="1_esc"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_esc"]
+size = Vector2(90, 70)
+
+[node name="Escondite" type="Area2D"]
+script = ExtResource("1_esc")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_esc")
+debug_color = Color(0.2, 0.7, 0.3, 0.42)

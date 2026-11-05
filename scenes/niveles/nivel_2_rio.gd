@@ -1,0 +1,205 @@
+extends Node2D
+## Nivel 2 — El Río de la Llorona
+## Objetivo: encontrar la pertenencia correcta de sus hijos entre señuelos
+## y entregársela (dejar que te alcance cargándola).
+
+@export var ancho_nivel: int = 1152
+@export var alto_nivel: int = 648
+@export_file("*.tscn") var siguiente_nivel: String = ""
+## (Opcional) Un mensaje extra antes del diálogo. Déjalo vacío si no lo usas.
+@export_multiline var pista_inicial: String = ""
+
+## Mensajes de ayuda que salen después de la pista (uno tras otro)
+## Diálogo de la abuela (o mensajes en pantalla si no hay abuela), en orden
+@export var mensajes_tutorial: PackedStringArray = [
+	"Ay, mija… ven, acércate. Este es el río de la Llorona.",
+	"Dicen que hace mucho tiempo perdió a sus hijos en estas aguas… y desde entonces los busca, llorando, cada noche de Xantolo.",
+	"Su llanto no es de maldad, es de tristeza. Lo que ella necesita es recordarlos.",
+	"Busca lo que era de su hijo. Él era muy inquieto… nunca se estaba quieto, igual que su juguete favorito.",
+	"Lo enredaba con un cordel, lo lanzaba al suelo… y aquello daba vueltas y vueltas, bailando sobre la tierra hasta cansarse.",
+	"Pero fíjate bien… por la orilla hay otras cosas tiradas. No te confundas. Toma solo una con [E].",
+	"Si la Llorona te ve, te va a seguir. Corre a los arbustos y agáchate [%agachar%]; ahí no te verá.",
+	"Cuando creas tener lo que era suyo, no huyas. Deja que se acerque… y entrégaselo.",
+	"Si te equivocas, su llanto te alcanzará. Piensa bien antes de escoger, mija.",
+	"Y cuidado con el agua, mija. Salta de piedra en piedra. Ve con Dios, que las ánimas te acompañen.",
+]
+@export var segundos_por_mensaje: float = 4.0
+
+var _jugador: Node
+var _ayuda: Label
+var _aviso_persecucion := false
+var _hud: Label
+var _mensaje: Label
+var _terminado := false
+
+
+func _ready() -> void:
+	_asegurar_accion("interactuar", KEY_E)
+	_jugador = get_tree().get_first_node_in_group("jugador")
+	_configurar_camara()
+	_crear_hud()
+	if _jugador:
+		_jugador.vidas_cambiadas.connect(func(_v): _actualizar_hud())
+		_jugador.sin_vidas.connect(_game_over)
+	for p in get_tree().get_nodes_in_group("pertenencias"):
+		p.tomada.connect(func(_o): _actualizar_hud())
+	var llorona = get_tree().get_first_node_in_group("llorona")
+	if llorona:
+		llorona.calmada.connect(_victoria)
+	_actualizar_hud()
+	_tutorial()
+
+
+func _tutorial() -> void:
+	# Si hay una Abuela en el nivel, ella da la pista y las instrucciones
+	var abuela = get_tree().get_first_node_in_group("abuela")
+	if abuela:
+		var lista := PackedStringArray()
+		var pista := pista_inicial
+		if pista.begins_with("Chicomexochitl:"):
+			pista = pista.trim_prefix("Chicomexochitl:").strip_edges().trim_prefix("\"").trim_suffix("\"")
+		if pista.strip_edges() != "":
+			lista.append(_teclas(pista))
+		for m in mensajes_tutorial:
+			lista.append(_teclas(m))
+		await get_tree().process_frame
+		abuela.decir(lista)
+		return
+	if pista_inicial.strip_edges() != "":
+		_mostrar_mensaje(_teclas(pista_inicial), 5.0)
+		await get_tree().create_timer(5.5).timeout
+	for m in mensajes_tutorial:
+		if _terminado:
+			return
+		_mostrar_mensaje(_teclas(m), segundos_por_mensaje)
+		await get_tree().create_timer(segundos_por_mensaje + 1.2).timeout
+
+
+func _process(_delta: float) -> void:
+	_actualizar_hud()
+	# La primera vez que la Llorona te persigue, recuerda cómo esconderse
+	if not _aviso_persecucion and not _terminado:
+		var ll = get_tree().get_first_node_in_group("llorona")
+		if ll and ll.estado == "persecucion":
+			_aviso_persecucion = true
+			_mostrar_mensaje(_teclas("¡Te vio! Corre a un arbusto y agáchate [%agachar%]"), 3.0)
+
+
+func _configurar_camara() -> void:
+	if _jugador == null:
+		return
+	var camara := _jugador.get_node_or_null("Camera2D") as Camera2D
+	if camara == null:
+		return
+	camara.zoom = Vector2.ONE
+	# Si hay un Sprite2D llamado "Fondo", los límites salen de su tamaño real
+	var fondo := get_node_or_null("Fondo") as Sprite2D
+	if fondo and fondo.texture:
+		var r := fondo.get_rect()
+		var esq1 := fondo.to_global(r.position)
+		var esq2 := fondo.to_global(r.end)
+		camara.limit_left = int(minf(esq1.x, esq2.x))
+		camara.limit_top = int(minf(esq1.y, esq2.y))
+		camara.limit_right = int(maxf(esq1.x, esq2.x))
+		camara.limit_bottom = int(maxf(esq1.y, esq2.y))
+	else:
+		camara.limit_left = 0
+		camara.limit_top = 0
+		camara.limit_right = ancho_nivel
+		camara.limit_bottom = alto_nivel
+
+
+func _victoria() -> void:
+	_terminado = true
+	_mostrar_mensaje("La Llorona reconoce a sus hijos...\nY por fin encuentra paz", 0.0)
+	await get_tree().create_timer(4.0).timeout
+	if siguiente_nivel != "":
+		get_tree().change_scene_to_file(siguiente_nivel)
+
+
+func _game_over() -> void:
+	_terminado = true
+	_mostrar_mensaje("El llanto del río te alcanzó...\nIntenta de nuevo", 0.0)
+	await get_tree().create_timer(2.5).timeout
+	get_tree().reload_current_scene()
+
+
+# ---------- HUD ----------
+
+func _crear_hud() -> void:
+	var capa := CanvasLayer.new()
+	add_child(capa)
+	_hud = _label_base(16)
+	_hud.position = Vector2(16, 12)
+	capa.add_child(_hud)
+	_mensaje = _label_base(20)
+	_mensaje.set_anchors_preset(Control.PRESET_CENTER)
+	_mensaje.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_mensaje.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	_mensaje.grow_vertical = Control.GROW_DIRECTION_BOTH
+	_mensaje.modulate = Color(1.0, 0.85, 0.55)
+	_mensaje.visible = false
+	capa.add_child(_mensaje)
+
+	# Controles siempre visibles abajo
+	_ayuda = _label_base(13)
+	_ayuda.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
+	_ayuda.position = Vector2(16, get_viewport().get_visible_rect().size.y - 30)
+	_ayuda.modulate = Color(1, 1, 1, 0.75)
+	_ayuda.text = _teclas("[%izquierda%][%derecha%] Moverse   [%saltar%] Saltar   [%agachar%] Agacharse / esconderse   [E] Tomar")
+	capa.add_child(_ayuda)
+
+
+## Cambia %accion% por la tecla que tiene asignada en el Mapa de Entrada
+func _teclas(txt: String) -> String:
+	for accion in ["izquierda", "derecha", "saltar", "agachar"]:
+		var tecla: String = accion
+		if InputMap.has_action(accion):
+			# Junta todas las teclas de la acción: ej. "S / Abajo"
+			var nombres: Array[String] = []
+			for ev in InputMap.action_get_events(accion):
+				if ev is InputEventKey:
+					var n: String = ev.as_text().replace(" (Physical)", "").replace(" - Physical", "")
+					n = n.replace("Down", "↓").replace("Up", "↑").replace("Left", "←").replace("Right", "→")
+					if not nombres.has(n):
+						nombres.append(n)
+			if not nombres.is_empty():
+				tecla = " / ".join(nombres)
+		txt = txt.replace("%" + accion + "%", tecla)
+	return txt
+
+
+func _label_base(tam: int) -> Label:
+	var l := Label.new()
+	l.add_theme_font_size_override("font_size", tam)
+	l.add_theme_color_override("font_outline_color", Color.BLACK)
+	l.add_theme_constant_override("outline_size", 5)
+	return l
+
+
+func _actualizar_hud() -> void:
+	if _jugador == null or _hud == null:
+		return
+	var llevas: String = _jugador.objeto_en_mano.nombre if _jugador.objeto_en_mano else "nada"
+	var escondida := "   [Escondida]" if _jugador.esta_escondida() else ""
+	_hud.text = "Vidas %d/%d   Llevas: %s%s" % [_jugador.vidas, _jugador.vidas_max, llevas, escondida]
+
+
+func _mostrar_mensaje(txt: String, duracion: float) -> void:
+	_mensaje.text = txt
+	_mensaje.modulate.a = 1.0
+	_mensaje.visible = true
+	if duracion > 0.0:
+		await get_tree().create_timer(duracion).timeout
+		if not _terminado:
+			var tw := create_tween()
+			tw.tween_property(_mensaje, "modulate:a", 0.0, 1.0)
+
+
+func _asegurar_accion(nombre: String, tecla: Key) -> void:
+	if InputMap.has_action(nombre):
+		return
+	InputMap.add_action(nombre)
+	var ev := InputEventKey.new()
+	ev.physical_keycode = tecla
+	InputMap.action_add_event(nombre, ev)

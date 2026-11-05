@@ -1,0 +1,63 @@
+[gd_scene format=3 uid="uid://dsohss617q4dj"]
+
+[ext_resource type="Texture2D" uid="uid://ytxhsrfm8bab" path="res://assets/chaneques/chaneque_noise .png" id="1_fu48x"]
+[ext_resource type="Texture2D" uid="uid://d3md1m2050656" path="res://assets/chaneques/chaneque_disperse.png" id="2_qlomq"]
+[ext_resource type="Texture2D" uid="uid://dmojefnylrl1u" path="res://assets/chaneques/chaneque_idle.png" id="3_62ay7"]
+[ext_resource type="Texture2D" uid="uid://2d0r7ctitfbi" path="res://assets/chaneques/chaneque_walk01.png" id="4_jkvsm"]
+[ext_resource type="Texture2D" uid="uid://mdph65yanmlw" path="res://assets/chaneques/chaneque_walk02.png" id="5_oc8cp"]
+[ext_resource type="Script" uid="uid://dyg03vbqqot8p" path="res://script/chaneque.gd" id="6_01a7g"]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_hgy67"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("1_fu48x")
+}],
+"loop": 0,
+"name": &"cry",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("2_qlomq")
+}],
+"loop": 0,
+"name": &"disappear",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("3_62ay7")
+}],
+"loop": 1,
+"name": &"idle",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("4_jkvsm")
+}, {
+"duration": 1.0,
+"texture": ExtResource("5_oc8cp")
+}],
+"loop": 1,
+"name": &"walk",
+"speed": 5.0
+}]
+
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_xglk0"]
+radius = 16.0
+height = 104.0
+
+[node name="Chaneque" type="CharacterBody2D" unique_id=1483246434]
+script = ExtResource("6_01a7g")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=580688178]
+scale = Vector2(0.11, 0.11)
+sprite_frames = SubResource("SpriteFrames_hgy67")
+animation = &"cry"
+autoplay = "idle"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1337365755]
+position = Vector2(0, 0.4)
+shape = SubResource("CapsuleShape2D_xglk0")

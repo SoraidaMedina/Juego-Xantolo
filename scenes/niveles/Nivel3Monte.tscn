@@ -1,0 +1,148 @@
+[gd_scene format=3 uid="uid://q62x6ay1mqv8"]
+
+[ext_resource type="Script" uid="uid://kft3tgi20a0s" path="res://scenes/niveles/nivel_3_monte.gd" id="1_upsg6"]
+[ext_resource type="Texture2D" uid="uid://du40ergetseat" path="res://assets/fondos/monte.png" id="2_upsg6"]
+[ext_resource type="PackedScene" uid="uid://2mliplafc3uu" path="res://scenes/personajes/Xochik.tscn" id="3_txgfw"]
+[ext_resource type="PackedScene" uid="uid://b8nduubajhyl7" path="res://scenes/personajes/Chicomexochitl.tscn" id="4_4oo77"]
+[ext_resource type="PackedScene" uid="uid://bxw3rif45c1f0" path="res://scenes/niveles/PuntoControl.tscn" id="5_lbocm"]
+[ext_resource type="PackedScene" uid="uid://b1hyj5ne7g141" path="res://scenes/personajes/Nahual.tscn" id="8_e8cat"]
+[ext_resource type="PackedScene" path="res://scenes/meta.tscn" id="9_famfb"]
+[ext_resource type="PackedScene" path="res://scenes/plataforma.tscn" id="15_pgjh1"]
+[ext_resource type="PackedScene" path="res://scenes/escondite.tscn" id="17_msny7"]
+[ext_resource type="PackedScene" path="res://scenes/personajes/Abuela.tscn" id="18_h5h1e"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_hgy67"]
+size = Vector2(195, 29.5)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_upsg6"]
+size = Vector2(1009, 16.5)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_xglk0"]
+size = Vector2(40, 1035)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_7uhor"]
+size = Vector2(40, 960)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_1ah34"]
+resource_local_to_scene = true
+size = Vector2(140, 140)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_e8cat"]
+resource_local_to_scene = true
+size = Vector2(116, 9)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_famfb"]
+resource_local_to_scene = true
+size = Vector2(146, 6)
+
+[node name="Nivel3Monte" type="Node2D" unique_id=945253347]
+script = ExtResource("1_upsg6")
+siguiente_nivel = "uid://caa73006n0ct8"
+
+[node name="Fondo" type="Sprite2D" parent="." unique_id=598846160]
+z_index = -10
+position = Vector2(681.99994, 469.99997)
+scale = Vector2(0.844, 0.844)
+texture = ExtResource("2_upsg6")
+
+[node name="Suelo" type="StaticBody2D" parent="." unique_id=752122026]
+position = Vector2(576, 580)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Suelo" unique_id=1701271631]
+position = Vector2(675.5, -173.75)
+shape = SubResource("RectangleShape2D_hgy67")
+
+[node name="CollisionShape2D2" type="CollisionShape2D" parent="Suelo" unique_id=757006644]
+position = Vector2(260.5, 101.75)
+shape = SubResource("RectangleShape2D_upsg6")
+
+[node name="ParedIzq" type="CollisionShape2D" parent="Suelo" unique_id=1217428556]
+position = Vector2(-576, -182.5)
+shape = SubResource("RectangleShape2D_xglk0")
+
+[node name="ParedDer" type="CollisionShape2D" parent="Suelo" unique_id=143034594]
+position = Vector2(793, -216)
+shape = SubResource("RectangleShape2D_7uhor")
+
+[node name="Xochik" parent="." unique_id=509951126 instance=ExtResource("3_txgfw")]
+position = Vector2(1265, 330)
+mirar_izquierda_al_inicio = true
+
+[node name="Chicomexochitl" parent="." unique_id=894604400 instance=ExtResource("4_4oo77")]
+position = Vector2(1240, 244)
+distancia_x = 70.0
+
+[node name="PuntoControl" parent="." unique_id=1220790569 instance=ExtResource("5_lbocm")]
+position = Vector2(1325, 262)
+
+[node name="Escondite" parent="." unique_id=479151929 instance=ExtResource("17_msny7")]
+position = Vector2(421, 657)
+
+[node name="CollisionShape2D" parent="Escondite" index="0"]
+position = Vector2(499, -44)
+
+[node name="Escondite2" parent="." unique_id=1760136927 instance=ExtResource("17_msny7")]
+position = Vector2(199, 692)
+
+[node name="CollisionShape2D" parent="Escondite2" index="0"]
+position = Vector2(316, -65)
+
+[node name="Abuela" parent="." unique_id=1874403481 instance=ExtResource("18_h5h1e")]
+position = Vector2(1189, 399)
+
+[node name="Nahual" parent="." unique_id=553344950 instance=ExtResource("8_e8cat")]
+position = Vector2(715, 605)
+
+[node name="Meta" parent="." unique_id=392431152 instance=ExtResource("9_famfb")]
+position = Vector2(194, 367)
+
+[node name="CollisionShape2D" parent="Meta" index="0"]
+position = Vector2(-5, -8)
+shape = SubResource("RectangleShape2D_1ah34")
+
+[node name="Plataforma" parent="." unique_id=309859906 instance=ExtResource("15_pgjh1")]
+position = Vector2(1192, 539)
+
+[node name="Sprite2D" parent="Plataforma" index="0"]
+scale = Vector2(0.15, 0.15)
+
+[node name="CollisionShape2D" parent="Plataforma" index="1"]
+position = Vector2(3, -9)
+shape = SubResource("RectangleShape2D_e8cat")
+
+[node name="Plataforma2" parent="." unique_id=1580582081 instance=ExtResource("15_pgjh1")]
+position = Vector2(1109, 571)
+
+[node name="Plataforma3" parent="." unique_id=281893189 instance=ExtResource("15_pgjh1")]
+position = Vector2(1042, 605)
+
+[node name="Plataforma4" parent="." unique_id=251737728 instance=ExtResource("15_pgjh1")]
+position = Vector2(963, 657)
+
+[node name="Plataforma5" parent="." unique_id=740750419 instance=ExtResource("15_pgjh1")]
+position = Vector2(351, 651)
+
+[node name="Plataforma6" parent="." unique_id=1151258218 instance=ExtResource("15_pgjh1")]
+position = Vector2(252, 605)
+
+[node name="Sprite2D" parent="Plataforma6" index="0"]
+scale = Vector2(0.15, 0.15)
+
+[node name="CollisionShape2D" parent="Plataforma6" index="1"]
+position = Vector2(6, -14)
+shape = SubResource("RectangleShape2D_famfb")
+
+[node name="Plataforma7" parent="." unique_id=826966937 instance=ExtResource("15_pgjh1")]
+position = Vector2(136, 565)
+
+[node name="Plataforma9" parent="." unique_id=2055836046 instance=ExtResource("15_pgjh1")]
+position = Vector2(160, 511)
+
+[node name="Plataforma10" parent="." unique_id=1156823571 instance=ExtResource("15_pgjh1")]
+position = Vector2(269, 473)
+
+[editable path="Escondite"]
+[editable path="Escondite2"]
+[editable path="Meta"]
+[editable path="Plataforma"]
+[editable path="Plataforma6"]

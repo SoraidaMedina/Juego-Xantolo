@@ -1,0 +1,160 @@
+[gd_scene format=3 uid="uid://diymhwmfnruf1"]
+
+[ext_resource type="Script" uid="uid://d3uudtd53vkgm" path="res://scenes/niveles/nivel_2_rio.gd" id="1_0n5he"]
+[ext_resource type="Texture2D" uid="uid://dvd3kgcrwysjo" path="res://assets/fondos/rio_llorona_bg.png" id="2_0w4l2"]
+[ext_resource type="PackedScene" uid="uid://2mliplafc3uu" path="res://scenes/personajes/Xochik.tscn" id="3_0w4l2"]
+[ext_resource type="PackedScene" uid="uid://b8nduubajhyl7" path="res://scenes/personajes/Chicomexochitl.tscn" id="4_4p0we"]
+[ext_resource type="PackedScene" uid="uid://bxw3rif45c1f0" path="res://scenes/niveles/PuntoControl.tscn" id="5_akyw3"]
+[ext_resource type="PackedScene" uid="uid://csrb1mu5rdba3" path="res://scenes/personajes/Llorona.tscn" id="6_4p0we"]
+[ext_resource type="PackedScene" path="res://scenes/pertenencia.tscn" id="7_akyw3"]
+[ext_resource type="Script" uid="uid://c83ill6u8p685" path="res://script/llorona.gd" id="7_j23ev"]
+[ext_resource type="Texture2D" uid="uid://bewtvpyilat7r" path="res://assets/objetos/trompo.png" id="8_j23ev"]
+[ext_resource type="Texture2D" uid="uid://cq1imxlxlxw6r" path="res://assets/objetos/conejo_peluche.png" id="9_bieiw"]
+[ext_resource type="Texture2D" uid="uid://bp7j7tplf0dgg" path="res://assets/objetos/peine.png" id="10_n442u"]
+[ext_resource type="Texture2D" uid="uid://dpdu18nievq1l" path="res://assets/objetos/retrato_familia.png" id="11_f6kk8"]
+[ext_resource type="Texture2D" uid="uid://c47ugsvn1hb04" path="res://assets/objetos/huaraches.png" id="12_dmwfw"]
+[ext_resource type="PackedScene" path="res://scenes/agua.tscn" id="13_akyw3"]
+[ext_resource type="PackedScene" path="res://scenes/plataforma.tscn" id="14_j23ev"]
+[ext_resource type="Texture2D" uid="uid://c4hma8cebwv2t" path="res://assets/objetos/piedra_runas.png" id="15_bieiw"]
+[ext_resource type="PackedScene" path="res://scenes/escondite.tscn" id="17_bieiw"]
+[ext_resource type="PackedScene" path="res://scenes/personajes/Abuela.tscn" id="18_n442u"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_hgy67"]
+size = Vector2(742.5, 40)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_xglk0"]
+size = Vector2(40, 1035)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_7uhor"]
+size = Vector2(40, 960)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_akyw3"]
+resource_local_to_scene = true
+size = Vector2(594.625, 112)
+
+[node name="Nivel2Rio" type="Node2D" unique_id=945253347]
+script = ExtResource("1_0n5he")
+
+[node name="Fondo" type="Sprite2D" parent="." unique_id=598846160]
+z_index = -10
+position = Vector2(709, 467)
+scale = Vector2(0.844, 0.844)
+texture = ExtResource("2_0w4l2")
+
+[node name="Suelo" type="StaticBody2D" parent="." unique_id=752122026]
+position = Vector2(576, 580)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Suelo" unique_id=1701271631]
+position = Vector2(-193.25, 192)
+shape = SubResource("RectangleShape2D_hgy67")
+
+[node name="ParedIzq" type="CollisionShape2D" parent="Suelo" unique_id=1217428556]
+position = Vector2(-576, -182.5)
+shape = SubResource("RectangleShape2D_xglk0")
+
+[node name="ParedDer" type="CollisionShape2D" parent="Suelo" unique_id=143034594]
+position = Vector2(843, -203)
+shape = SubResource("RectangleShape2D_7uhor")
+
+[node name="Xochik" parent="." unique_id=509951126 instance=ExtResource("3_0w4l2")]
+position = Vector2(191, 601)
+
+[node name="Chicomexochitl" parent="." unique_id=894604400 instance=ExtResource("4_4p0we")]
+position = Vector2(263, 467)
+distancia_x = 70.0
+
+[node name="PuntoControl" parent="." unique_id=1220790569 instance=ExtResource("5_akyw3")]
+position = Vector2(93, 636)
+
+[node name="Llorona" parent="." unique_id=1874109392 instance=ExtResource("6_4p0we")]
+position = Vector2(1050, 571)
+script = ExtResource("7_j23ev")
+velocidad = 50.0
+velocidad_persecucion = 115.0
+distancia_patrulla = 250.0
+rango_contacto = 60.0
+tiempo_busqueda = 2.5
+flota = true
+amplitud_flote = 12.0
+distancia_encuentro = 110.0
+
+[node name="Pertenencia" parent="." unique_id=1483966190 instance=ExtResource("7_akyw3")]
+position = Vector2(933, 625)
+es_correcto = true
+textura = ExtResource("8_j23ev")
+
+[node name="Pertenencia2" parent="." unique_id=506433682 instance=ExtResource("7_akyw3")]
+position = Vector2(103, 658)
+nombre = "Conejo de peluche"
+textura = ExtResource("9_bieiw")
+
+[node name="Pertenencia3" parent="." unique_id=1969473680 instance=ExtResource("7_akyw3")]
+position = Vector2(528, 600)
+nombre = "Peine"
+textura = ExtResource("10_n442u")
+
+[node name="Pertenencia4" parent="." unique_id=1975942596 instance=ExtResource("7_akyw3")]
+position = Vector2(772, 648)
+nombre = "Retrato"
+textura = ExtResource("11_f6kk8")
+
+[node name="Pertenencia5" parent="." unique_id=341134949 instance=ExtResource("7_akyw3")]
+position = Vector2(1080, 740)
+nombre = "Huaraches"
+textura = ExtResource("12_dmwfw")
+
+[node name="Agua" parent="." unique_id=1691423261 instance=ExtResource("13_akyw3")]
+position = Vector2(752, 615)
+
+[node name="CollisionShape2D" parent="Agua" index="0"]
+position = Vector2(299.3125, 171)
+shape = SubResource("RectangleShape2D_akyw3")
+
+[node name="Plataforma9" parent="." unique_id=954965968 instance=ExtResource("14_j23ev")]
+position = Vector2(1032, 745)
+
+[node name="Plataforma" parent="." unique_id=886746818 instance=ExtResource("14_j23ev")]
+position = Vector2(640, 731)
+textura = ExtResource("15_bieiw")
+escala = 0.25
+
+[node name="Plataforma2" parent="." unique_id=1620269851 instance=ExtResource("14_j23ev")]
+position = Vector2(729, 731)
+textura = ExtResource("15_bieiw")
+escala = 0.25
+
+[node name="Plataforma3" parent="." unique_id=663867148 instance=ExtResource("14_j23ev")]
+position = Vector2(818, 727)
+textura = ExtResource("15_bieiw")
+escala = 0.25
+
+[node name="Plataforma4" parent="." unique_id=1170183826 instance=ExtResource("14_j23ev")]
+position = Vector2(909, 720)
+textura = ExtResource("15_bieiw")
+escala = 0.25
+
+[node name="Plataforma5" parent="." unique_id=2101317644 instance=ExtResource("14_j23ev")]
+position = Vector2(1002, 717)
+textura = ExtResource("15_bieiw")
+escala = 0.25
+
+[node name="Plataforma10" parent="." unique_id=1477712498 instance=ExtResource("14_j23ev")]
+position = Vector2(1092, 713)
+textura = ExtResource("15_bieiw")
+escala = 0.25
+
+[node name="Escondite" parent="." unique_id=479151929 instance=ExtResource("17_bieiw")]
+position = Vector2(421, 657)
+
+[node name="CollisionShape2D" parent="Escondite" index="0"]
+position = Vector2(0, 19)
+
+[node name="Escondite2" parent="." unique_id=1760136927 instance=ExtResource("17_bieiw")]
+position = Vector2(199, 692)
+
+[node name="Abuela" parent="." unique_id=1874403481 instance=ExtResource("18_n442u")]
+position = Vector2(338, 686)
+
+[editable path="Agua"]
+[editable path="Escondite"]
+[editable path="Escondite2"]

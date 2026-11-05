@@ -1,0 +1,83 @@
+[gd_scene format=3 uid="uid://bac0wvexqj5tl"]
+
+[ext_resource type="Script" uid="uid://d3e0nxsmrjk5r" path="res://nivel_1_sierra.gd" id="1_a64pu"]
+[ext_resource type="Texture2D" uid="uid://b506hwkm5cvwj" path="res://assets/fondos/La_Sierra_de_los_Chaneques.png" id="2_lthpk"]
+[ext_resource type="PackedScene" uid="uid://2mliplafc3uu" path="res://scenes/personajes/Xochik.tscn" id="3_tvjvc"]
+[ext_resource type="PackedScene" uid="uid://b8nduubajhyl7" path="res://scenes/personajes/Chicomexochitl.tscn" id="4_fnkpx"]
+[ext_resource type="PackedScene" uid="uid://bxw3rif45c1f0" path="res://scenes/niveles/PuntoControl.tscn" id="5_8fyhb"]
+[ext_resource type="PackedScene" uid="uid://dsohss617q4dj" path="res://scenes/personajes/chaneque.tscn" id="6_dmm6d"]
+[ext_resource type="PackedScene" path="res://scenes/objeto_ofrenda.tscn" id="7_fnkpx"]
+[ext_resource type="Texture2D" uid="uid://cb1n100qh4ce2" path="res://assets/objetos/vela2.png" id="8_p3xlf"]
+[ext_resource type="Texture2D" uid="uid://db24rsa2a3ihc" path="res://assets/objetos/flor_cempasuchil.png" id="9_0hn0m"]
+[ext_resource type="Texture2D" uid="uid://bodpu73f5uhdv" path="res://assets/objetos/copal.png" id="10_go21x"]
+[ext_resource type="Texture2D" uid="uid://buiru4pr2l80t" path="res://assets/objetos/petalos.png" id="11_67kyt"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_hgy67"]
+size = Vector2(1152, 40)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_xglk0"]
+size = Vector2(40, 800)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_7uhor"]
+size = Vector2(40, 800)
+
+[node name="Nivel1Sierra" type="Node2D" unique_id=945253347]
+script = ExtResource("1_a64pu")
+
+[node name="Fondo" type="Sprite2D" parent="." unique_id=598846160]
+z_index = -10
+scale = Vector2(0.844, 0.844)
+texture = ExtResource("2_lthpk")
+centered = false
+
+[node name="Suelo" type="StaticBody2D" parent="." unique_id=752122026]
+position = Vector2(576, 580)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Suelo" unique_id=1701271631]
+shape = SubResource("RectangleShape2D_hgy67")
+
+[node name="ParedIzq" type="CollisionShape2D" parent="Suelo" unique_id=1217428556]
+position = Vector2(-576, -300)
+shape = SubResource("RectangleShape2D_xglk0")
+
+[node name="ParedDer" type="CollisionShape2D" parent="Suelo" unique_id=143034594]
+position = Vector2(596, -300)
+shape = SubResource("RectangleShape2D_7uhor")
+
+[node name="Xochik" parent="." unique_id=509951126 instance=ExtResource("3_tvjvc")]
+position = Vector2(160, 480)
+
+[node name="Chicomexochitl" parent="." unique_id=894604400 instance=ExtResource("4_fnkpx")]
+position = Vector2(260, 400)
+
+[node name="PuntoControl" parent="." unique_id=1220790569 instance=ExtResource("5_8fyhb")]
+position = Vector2(100, 470)
+
+[node name="Chaneque" parent="." unique_id=1483246434 instance=ExtResource("6_dmm6d")]
+position = Vector2(450, 495)
+
+[node name="Chaneque2" parent="." unique_id=1658484219 instance=ExtResource("6_dmm6d")]
+position = Vector2(850, 495)
+
+[node name="ObjetoOfrenda" parent="." unique_id=1575502018 instance=ExtResource("7_fnkpx")]
+position = Vector2(331, 512)
+textura = ExtResource("8_p3xlf")
+reaparece = null
+
+[node name="ObjetoOfrenda2" parent="." unique_id=1680060962 instance=ExtResource("7_fnkpx")]
+position = Vector2(582, 404)
+tipo = "flor"
+textura = ExtResource("9_0hn0m")
+reaparece = null
+
+[node name="ObjetoOfrenda3" parent="." unique_id=404243869 instance=ExtResource("7_fnkpx")]
+position = Vector2(59, 341)
+tipo = "copal"
+textura = ExtResource("10_go21x")
+reaparece = null
+
+[node name="ObjetoOfrenda4" parent="." unique_id=2069936145 instance=ExtResource("7_fnkpx")]
+position = Vector2(1060, 499)
+tipo = "petalos"
+textura = ExtResource("11_67kyt")
+reaparece = null

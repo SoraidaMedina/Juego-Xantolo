@@ -1,0 +1,68 @@
+[gd_scene format=3 uid="uid://caa73006n0ct8"]
+
+[ext_resource type="Texture2D" uid="uid://sfer0sx4kj1l" path="res://assets/fondos/pueblo_amanecer_bg.png" id="2_6th2s"]
+[ext_resource type="Script" uid="uid://jiasw3n3isxk" path="res://script/nivel_final_pueblo.gd" id="3_17rf8"]
+[ext_resource type="PackedScene" uid="uid://2mliplafc3uu" path="res://scenes/personajes/Xochik.tscn" id="3_a27jt"]
+[ext_resource type="PackedScene" path="res://scenes/objeto_ofrenda.tscn" id="5_ovft0"]
+[ext_resource type="Texture2D" uid="uid://dpdu18nievq1l" path="res://assets/objetos/retrato_familia.png" id="7_r1cvs"]
+[ext_resource type="Texture2D" uid="uid://djttct1doh23n" path="res://assets/objetos/morral.png" id="8_kk0kb"]
+[ext_resource type="PackedScene" path="res://scenes/meta.tscn" id="9_r4bm3"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_hgy67"]
+size = Vector2(1402.75, 29.5)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_xglk0"]
+size = Vector2(40, 1035)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_7uhor"]
+size = Vector2(40, 960)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_d88um"]
+resource_local_to_scene = true
+size = Vector2(116.25, 134.5)
+
+[node name="NivelFinalPueblo" type="Node2D" unique_id=945253347]
+script = ExtResource("3_17rf8")
+
+[node name="Fondo" type="Sprite2D" parent="." unique_id=598846160]
+z_index = -10
+position = Vector2(681.99994, 469.99997)
+scale = Vector2(0.844, 0.844)
+texture = ExtResource("2_6th2s")
+
+[node name="Suelo" type="StaticBody2D" parent="." unique_id=752122026]
+position = Vector2(576, 580)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Suelo" unique_id=1701271631]
+position = Vector2(120.625, 276)
+shape = SubResource("RectangleShape2D_hgy67")
+
+[node name="ParedIzq" type="CollisionShape2D" parent="Suelo" unique_id=1217428556]
+position = Vector2(-595, -212)
+shape = SubResource("RectangleShape2D_xglk0")
+
+[node name="ParedDer" type="CollisionShape2D" parent="Suelo" unique_id=143034594]
+position = Vector2(824, -152)
+shape = SubResource("RectangleShape2D_7uhor")
+script = ExtResource("3_17rf8")
+
+[node name="Xochik" parent="." unique_id=509951126 instance=ExtResource("3_a27jt")]
+position = Vector2(125, 769)
+mirar_izquierda_al_inicio = true
+
+[node name="Meta" parent="." unique_id=1006572502 instance=ExtResource("9_r4bm3")]
+position = Vector2(997, 722)
+
+[node name="CollisionShape2D" parent="Meta" index="0"]
+position = Vector2(2, -2)
+shape = SubResource("RectangleShape2D_d88um")
+
+[node name="ObjetoOfrenda2" parent="." unique_id=2098073908 instance=ExtResource("5_ovft0")]
+position = Vector2(1059, 607)
+textura = ExtResource("7_r1cvs")
+
+[node name="ObjetoOfrenda3" parent="." unique_id=1525900619 instance=ExtResource("5_ovft0")]
+position = Vector2(964, 593)
+textura = ExtResource("8_kk0kb")
+
+[editable path="Meta"]

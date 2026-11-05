@@ -1,0 +1,56 @@
+[gd_scene format=3 uid="uid://b8nduubajhyl7"]
+
+[ext_resource type="Script" uid="uid://bcbh1230r6wwv" path="res://script/chicomexochitl.gd" id="1_iwtrw"]
+[ext_resource type="Texture2D" uid="uid://tc6875o6v8wt" path="res://assets/xicomexochitl/chicomexochitl_float_01.png" id="2_uuor1"]
+[ext_resource type="Texture2D" uid="uid://b8ufxrkcw083q" path="res://assets/xicomexochitl/chicomexochitl_float_02.png" id="3_85308"]
+[ext_resource type="Texture2D" uid="uid://c2k6efpqsglf0" path="res://assets/xicomexochitl/chicomexochitl_guide.png" id="4_2n1yt"]
+[ext_resource type="Texture2D" uid="uid://bnrl5b0pghok4" path="res://assets/xicomexochitl/chicomexochitl_idle.png" id="5_00e5v"]
+[ext_resource type="Texture2D" uid="uid://dvuen6kijuxyb" path="res://assets/xicomexochitl/chicomexochitl_light.png" id="6_a4ufv"]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_hgy67"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("2_uuor1")
+}, {
+"duration": 1.0,
+"texture": ExtResource("3_85308")
+}],
+"loop": 1,
+"name": &"float",
+"speed": 3.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("4_2n1yt")
+}],
+"loop": 0,
+"name": &"guide",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("5_00e5v")
+}],
+"loop": 1,
+"name": &"idle",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("6_a4ufv")
+}],
+"loop": 0,
+"name": &"light",
+"speed": 5.0
+}]
+
+[node name="Chicomexochitl" type="CharacterBody2D" unique_id=894604400]
+script = ExtResource("1_iwtrw")
+distancia_x = 120.0
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=660012958]
+scale = Vector2(0.1, 0.1)
+sprite_frames = SubResource("SpriteFrames_hgy67")
+animation = &"idle"
+autoplay = "idle"

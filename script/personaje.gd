@@ -1,0 +1,162 @@
+extends CharacterBody2D
+
+signal vidas_cambiadas(vidas: int)
+signal sin_vidas
+
+@export var velocidad: float = 150.0
+@export var fuerza_salto: float = -350.0
+@export var vidas_max: int = 3
+## Actívalo en los niveles donde Xochik empieza mirando a la izquierda
+@export var mirar_izquierda_al_inicio: bool = false
+## Px por debajo del fondo a los que se considera que cayó al vacío
+@export var margen_caida: float = 60.0
+## Posición y tamaño del objeto que carga en la mano (nivel 2)
+@export var offset_mano: Vector2 = Vector2(14, -6)
+@export var escala_mano: float = 0.05
+
+var gravedad: float = ProjectSettings.get_setting("physics/2d/default_gravity")
+@onready var anim: AnimatedSprite2D = $AnimatedSprite2D
+
+var punto_reaparicion: Vector2
+var atrapada: bool = false
+var vidas: int
+var agachada: bool = false
+var en_escondite: bool = false
+var objeto_en_mano: Node = null   # pertenencia que carga (nivel 2)
+var _mano: Sprite2D
+
+
+func _ready() -> void:
+	add_to_group("jugador")
+	punto_reaparicion = global_position
+	vidas = vidas_max
+	anim.flip_h = mirar_izquierda_al_inicio
+	_mano = Sprite2D.new()
+	_mano.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_mano.z_index = 1
+	_mano.visible = false
+	add_child(_mano)
+
+
+## Escondida = agachada dentro de un escondite
+func esta_escondida() -> bool:
+	return agachada and en_escondite
+
+
+func _physics_process(delta: float) -> void:
+	_revisar_caida()
+	if not is_on_floor():
+		velocity.y += gravedad * delta
+
+	if atrapada:
+		velocity.x = 0.0
+		move_and_slide()
+		return
+
+	agachada = is_on_floor() and Input.is_action_pressed("agachar")
+	var dir := Input.get_axis("izquierda", "derecha")
+
+	if Input.is_action_just_pressed("saltar") and is_on_floor() and not agachada:
+		velocity.y = fuerza_salto
+
+	velocity.x = 0.0 if agachada else dir * velocidad
+	move_and_slide()
+	_actualizar_animacion(dir)
+
+	# Se oscurece cuando está escondida
+	anim.self_modulate = Color(0.45, 0.45, 0.5) if esta_escondida() else Color.WHITE
+
+
+func _process(_delta: float) -> void:
+	if _mano.visible:
+		_mano.position = Vector2(-offset_mano.x if anim.flip_h else offset_mano.x, offset_mano.y)
+		_mano.flip_h = anim.flip_h
+
+
+func _actualizar_animacion(dir: float) -> void:
+	if dir != 0:
+		anim.flip_h = dir < 0
+	if agachada:
+		anim.play("crouch")
+	elif not is_on_floor():
+		anim.play("idle")
+	elif dir != 0:
+		anim.play("walk")
+	else:
+		anim.play("idle")
+
+
+func mostrar_en_mano(tex: Texture2D) -> void:
+	_mano.texture = tex
+	_mano.scale = Vector2.ONE * escala_mano
+	_mano.visible = true
+
+
+func ocultar_mano() -> void:
+	_mano.visible = false
+
+
+## Si cae más abajo del límite de la cámara (el fondo), pierde una vida
+func _revisar_caida() -> void:
+	if atrapada:
+		return
+	var limite := 100000.0
+	var cam := get_node_or_null("Camera2D") as Camera2D
+	if cam and cam.limit_bottom < 1000000:
+		limite = cam.limit_bottom + margen_caida
+	if global_position.y > limite:
+		ser_atrapada("¡Caíste al vacío!")
+
+
+func ser_atrapada(motivo: String = "") -> void:
+	if atrapada:
+		return
+	atrapada = true
+	vidas -= 1
+	vidas_cambiadas.emit(vidas)
+	_aviso_vida(motivo)
+	anim.play("idle")
+
+	var golpe := create_tween()
+	golpe.tween_property(anim, "modulate", Color(1, 0.4, 0.4), 0.1)
+	golpe.tween_property(anim, "modulate", Color.WHITE, 0.1)
+	await golpe.finished
+
+	if vidas <= 0:
+		var fin := create_tween()
+		fin.tween_property(anim, "modulate:a", 0.0, 0.8)
+		sin_vidas.emit()
+		return
+
+	var salida := create_tween()
+	salida.tween_property(anim, "modulate:a", 0.0, 0.5)
+	await salida.finished
+	global_position = punto_reaparicion
+	velocity = Vector2.ZERO
+	await get_tree().create_timer(0.3).timeout
+	var entrada := create_tween()
+	entrada.tween_property(anim, "modulate:a", 1.0, 0.5)
+	await entrada.finished
+	atrapada = false
+
+
+## Texto flotante "-1 vida" en pantalla
+func _aviso_vida(motivo: String) -> void:
+	var capa := CanvasLayer.new()
+	capa.layer = 50
+	get_tree().current_scene.add_child(capa)
+	var l := Label.new()
+	l.text = (motivo + "\n" if motivo != "" else "") + "-1 vida"
+	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	l.add_theme_font_size_override("font_size", 22)
+	l.add_theme_color_override("font_color", Color(1.0, 0.5, 0.45))
+	l.add_theme_color_override("font_outline_color", Color.BLACK)
+	l.add_theme_constant_override("outline_size", 6)
+	l.set_anchors_preset(Control.PRESET_CENTER)
+	l.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	l.grow_vertical = Control.GROW_DIRECTION_BOTH
+	capa.add_child(l)
+	var tw := capa.create_tween()
+	tw.tween_interval(1.2)
+	tw.tween_property(l, "modulate:a", 0.0, 0.6)
+	tw.tween_callback(capa.queue_free)
