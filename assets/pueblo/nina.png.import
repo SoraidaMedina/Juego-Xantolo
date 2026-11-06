@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://ch5vojqacusm4"
-path="res://.godot/imported/roca_chica.png-184c7b9bc87bb6f7c27f627802eef23f.ctex"
+uid="uid://cm7a3mdb6wgu6"
+path="res://.godot/imported/nina.png-b5e72bda2f64df77779707a33a14a243.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/plataformas/roca_chica.png"
-dest_files=["res://.godot/imported/roca_chica.png-184c7b9bc87bb6f7c27f627802eef23f.ctex"]
+source_file="res://assets/pueblo/nina.png"
+dest_files=["res://.godot/imported/nina.png-b5e72bda2f64df77779707a33a14a243.ctex"]
 
 [params]
 

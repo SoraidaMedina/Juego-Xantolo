@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://c8pd2q17c0iyu"
-path="res://.godot/imported/tronco.png-b43d0077d72c8ea1c115aa8ad047cd2f.ctex"
+uid="uid://2gjx2wnuhb1e"
+path="res://.godot/imported/arco_xantolo.png-a51a9185a7614f3cef064a93da4df8a0.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/plataformas/tronco.png"
-dest_files=["res://.godot/imported/tronco.png-b43d0077d72c8ea1c115aa8ad047cd2f.ctex"]
+source_file="res://assets/sierra/arco_xantolo.png"
+dest_files=["res://.godot/imported/arco_xantolo.png-a51a9185a7614f3cef064a93da4df8a0.ctex"]
 
 [params]
 

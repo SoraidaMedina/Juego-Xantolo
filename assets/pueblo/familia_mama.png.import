@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://du57ij11spuf3"
-path="res://.godot/imported/piedra_rio.png-3cee841cf10b40337ad4d0c8042a5b8d.ctex"
+uid="uid://3cgi17f5csd6"
+path="res://.godot/imported/familia_mama.png-0b9d9e394e59a9560733ef0115ce3a13.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/plataformas/piedra_rio.png"
-dest_files=["res://.godot/imported/piedra_rio.png-3cee841cf10b40337ad4d0c8042a5b8d.ctex"]
+source_file="res://assets/pueblo/familia_mama.png"
+dest_files=["res://.godot/imported/familia_mama.png-0b9d9e394e59a9560733ef0115ce3a13.ctex"]
 
 [params]
 

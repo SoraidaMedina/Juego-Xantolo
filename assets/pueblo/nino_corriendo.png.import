@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cpq7q5vick2io"
-path="res://.godot/imported/roca_ancha.png-114d1e3eebd319594b10a8c96a41b04e.ctex"
+uid="uid://cmmcrqar17te7"
+path="res://.godot/imported/nino_corriendo.png-02e54762d49d184991ae2c60320e625a.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/plataformas/roca_ancha.png"
-dest_files=["res://.godot/imported/roca_ancha.png-114d1e3eebd319594b10a8c96a41b04e.ctex"]
+source_file="res://assets/pueblo/nino_corriendo.png"
+dest_files=["res://.godot/imported/nino_corriendo.png-02e54762d49d184991ae2c60320e625a.ctex"]
 
 [params]
 

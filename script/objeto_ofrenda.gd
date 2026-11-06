@@ -92,6 +92,8 @@ func recoger() -> void:
 	aviso.visible = false
 	set_deferred("monitoring", false)
 	recogido.emit(self)
+	if tipo in ["vela", "flor", "petalos"] and textura:
+		Juego.agregar_ofrenda(textura.resource_path)
 	Juego.sfx("recoger", -2.0)
 
 	if ruido_al_recoger > 0.0:

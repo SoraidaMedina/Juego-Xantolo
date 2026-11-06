@@ -174,6 +174,7 @@ func _crear_tabla_controles() -> GridContainer:
 		["S   ·   ↓", "Agacharse / esconderse en arbustos"],
 		["E", "Tomar objetos · avanzar diálogo"],
 		["Q", "Quemar copal (dispersa chaneques)"],
+		["R", "Lanzar piedrita (distrae chaneques)"],
 		["F  (mantener)", "Ocultar la luz de la vela"],
 		["Esc", "Pausa"],
 	]

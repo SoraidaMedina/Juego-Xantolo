@@ -18,7 +18,7 @@ const MUSICA_POR_ESCENA := {
 	"res://scenes/niveles/Nivel1Sierra.tscn": "sierra",
 	"res://scenes/niveles/Nivel2Rio.tscn": "rio",
 	"res://scenes/niveles/Nivel3Monte.tscn": "monte",
-	"res://scenes/niveles/NivelFinalPueblo.tscn": "pueblo",
+	"res://scenes/niveles/NivelFinalPueblo.tscn": "menu",   # al restaurar el ritual cambia a "pueblo"
 }
 const VOLUMEN_MUSICA_DB := -6.0
 
@@ -30,6 +30,8 @@ var _pausa: Control
 var _gameover: Control
 var _texto_gameover: Label
 var _cambiando := false
+## Lo que Xochik ha recuperado en el camino (rutas de imagen). El altar final se arma con esto.
+var ofrenda: Array[String] = []
 var _musica: Array[AudioStreamPlayer] = []
 var _musica_actual := 0
 var _nombre_musica := ""
@@ -45,6 +47,7 @@ func _ready() -> void:
 	_asegurar_accion("interactuar", KEY_E)
 	_asegurar_accion("usar_copal", KEY_Q)
 	_asegurar_accion("ocultar_luz", KEY_F)
+	_asegurar_accion("lanzar_piedra", KEY_R)
 	_crear_pausa()
 	_crear_gameover()
 	_negro = ColorRect.new()
@@ -85,6 +88,7 @@ func siguiente_nivel() -> void:
 
 
 func nuevo_juego() -> void:
+	ofrenda.clear()
 	cambiar_escena(NIVELES[0])
 
 
@@ -121,6 +125,11 @@ func cambiar_escena(ruta: String) -> void:
 func _escena_actual() -> String:
 	var e := get_tree().current_scene
 	return e.scene_file_path if e else ""
+
+
+func agregar_ofrenda(ruta: String) -> void:
+	if ruta != "" and not ofrenda.has(ruta):
+		ofrenda.append(ruta)
 
 
 # ---------- Pausa ----------

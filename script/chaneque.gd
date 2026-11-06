@@ -1,9 +1,11 @@
 extends CharacterBody2D
 ## Chaneque — presencia traviesa de la Sierra (nivel 1), según el documento técnico:
-## · Aparece y desaparece entre los árboles: ratos visible, ratos se esfuma riendo.
+## · Siempre está presente patrullando (solo se esfuma con el copal o después de atraparte).
+## · Es curioso: si una piedrita [R] cae cerca, va a investigar el ruido y deja libre el paso.
 ## · Reacciona al RUIDO: caminar normal hace ruido, saltar o caer hace MUCHO ruido.
 ##   Agachada (quieta o caminando despacio) = silencio.
-## · Si te quedas a la vista y muy cerca demasiado tiempo, también te nota (más lento).
+## · REGLA: "si no te oye, no te ve". Agachada y en silencio puedes pasar junto a él.
+##   El anillo alrededor de Xochik marca hasta dónde se oyen sus pasos (= rango_oido).
 ## · Cuando la sospecha se llena ríe, avisa a los cercanos (atacan en grupo) y corre hacia ti.
 ## · Escondida en un arbusto o quemando copal [Q] estás a salvo.
 ## · Ya no quita vida con solo tocarte: primero tiene que descubrirte.
@@ -14,13 +16,18 @@ extends CharacterBody2D
 ## Distancia a la que oye pasos normales (saltar la multiplica x1.6)
 @export var rango_oido: float = 190.0
 ## Segundos de ruido continuo antes de descubrirte
-@export var tiempo_para_detectar: float = 1.2
+@export var tiempo_para_detectar: float = 1.5
 ## Segundos que te persigue antes de rendirse
 @export var tiempo_persecucion: float = 3.0
 @export var rango_contacto: float = 42.0
 ## Segundos fuera después del copal
 @export var tiempo_dispersado: float = 6.0
-## Ciclo de aparecer / desaparecer (segundos, al azar entre min y max)
+## Si está activo, se esfuma solo de vez en cuando (ciclo de aparecer / desaparecer)
+@export var desaparece_solo: bool = false
+## Distancia a la que oye caer una piedrita y va a investigar
+@export var rango_distraccion: float = 420.0
+## Segundos que se queda buscando donde cayó la piedrita
+@export var tiempo_investigando: float = 3.5
 @export var tiempo_visible_min: float = 6.0
 @export var tiempo_visible_max: float = 10.0
 @export var tiempo_oculto_min: float = 2.0
@@ -28,20 +35,22 @@ extends CharacterBody2D
 ## Radio en el que avisa a otros chaneques cuando te descubre
 @export var rango_grupo: float = 450.0
 ## Qué tan rápido sube la sospecha si estás quieta, a la vista y muy cerca (0 = nunca)
-@export var factor_quieta: float = 0.25
+@export var factor_quieta: float = 0.0
 
 var gravedad: float = ProjectSettings.get_setting("physics/2d/default_gravity")
 @onready var anim: AnimatedSprite2D = $AnimatedSprite2D
 
 var inicio_x: float
 var dir: float = 1.0
-## patrulla | alerta | persigue | riendo | oculto | dispersado
+## patrulla | alerta | investiga | persigue | riendo | oculto | dispersado
 var estado: String = "patrulla"
 var sospecha: float = 0.0
 var _t: float = 0.0
 var _t_persecucion: float = 0.0
 var _gen: int = 0            # invalida esperas viejas si cambia de estado
 var _icono: Label
+var _destino_x: float = 0.0
+var _t_busca: float = 0.0
 
 
 func _ready() -> void:
@@ -75,11 +84,15 @@ func _physics_process(delta: float) -> void:
 			_patrullar()
 			if activo:
 				_escuchar(j, delta)
-			if estado == "patrulla" and _t <= 0.0 and sospecha <= 0.0:
+			if desaparece_solo and estado == "patrulla" and _t <= 0.0 and sospecha <= 0.0:
 				_desvanecer(randf_range(tiempo_oculto_min, tiempo_oculto_max), "oculto")
 		"alerta":
 			velocity.x = 0.0
 			_escuchar(j, delta)
+		"investiga":
+			_investigar(delta)
+			if activo and estado == "investiga":
+				_escuchar(j, delta)
 		"persigue":
 			_perseguir(j, delta)
 		_:
@@ -118,10 +131,6 @@ func _escuchar(j: CharacterBody2D, delta: float) -> void:
 		return
 	var dist := global_position.distance_to(j.global_position)
 	var ruido: float = j.nivel_ruido() if j.has_method("nivel_ruido") else (1.0 if absf(j.velocity.x) > 10.0 else 0.0)
-	# Chocar con él haciendo ruido = te atrapa de inmediato
-	if ruido > 0.0 and absf(j.global_position.x - global_position.x) < rango_contacto and absf(j.global_position.y - global_position.y) < 90.0:
-		_atrapar(j)
-		return
 	var sube := 0.0
 	if ruido > 0.0 and dist < rango_oido * ruido:
 		sube = 1.0
@@ -132,7 +141,7 @@ func _escuchar(j: CharacterBody2D, delta: float) -> void:
 		_bajar_sospecha(delta)
 		return
 	sospecha += delta * sube
-	if estado == "patrulla":
+	if estado == "patrulla" or estado == "investiga":
 		estado = "alerta"
 		Juego.sfx("risa_chaneque", -14.0)
 	anim.flip_h = j.global_position.x < global_position.x
@@ -144,7 +153,7 @@ func _escuchar(j: CharacterBody2D, delta: float) -> void:
 
 
 func _bajar_sospecha(delta: float) -> void:
-	sospecha = maxf(sospecha - delta * 0.7, 0.0)
+	sospecha = maxf(sospecha - delta * 1.0, 0.0)
 	if estado == "alerta":
 		_icono.modulate.a = 0.4 + 0.6 * clampf(sospecha / tiempo_para_detectar, 0.0, 1.0)
 		if sospecha == 0.0:
@@ -161,6 +170,40 @@ func escuchar_ruido(pos: Vector2) -> void:
 	_mostrar_icono("?", Color(0.85, 0.85, 0.85))
 	anim.flip_h = pos.x < global_position.x
 	_play("cry")
+
+
+## Una piedrita cayó en pos: si la oye, va a ver qué fue
+func distraer(pos: Vector2) -> void:
+	if not (estado in ["patrulla", "alerta", "investiga"]):
+		return
+	if global_position.distance_to(pos) > rango_distraccion:
+		return
+	estado = "investiga"
+	sospecha = 0.0
+	_destino_x = pos.x
+	_t_busca = tiempo_investigando
+	_mostrar_icono("?", Color(0.85, 0.85, 0.85))
+	_icono.modulate.a = 1.0
+
+
+func _investigar(delta: float) -> void:
+	var dx := _destino_x - global_position.x
+	if absf(dx) > 12.0 and not is_on_wall():
+		dir = signf(dx)
+		velocity.x = dir * velocidad * 1.7
+		anim.flip_h = dir < 0
+		anim.speed_scale = 1.4
+		_play("walk")
+		return
+	# Llegó (o algo le estorba): busca mirando a los lados
+	velocity.x = 0.0
+	anim.speed_scale = 1.0
+	_play("cry")
+	_t_busca -= delta
+	anim.flip_h = int(_t_busca * 1.5) % 2 == 0
+	if _t_busca <= 0.0:
+		estado = "patrulla"
+		_icono.visible = false
 
 
 # ---------- Persecución ----------
@@ -182,7 +225,7 @@ func _descubrir(j: CharacterBody2D, avisar: bool) -> void:
 
 ## Otro chaneque descubrió a Xochik y llama a este
 func unirse(j: CharacterBody2D) -> void:
-	if estado == "patrulla" or estado == "alerta":
+	if estado in ["patrulla", "alerta", "investiga"]:
 		_descubrir(j, false)
 
 

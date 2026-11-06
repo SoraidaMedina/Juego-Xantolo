@@ -24,7 +24,8 @@ extends Node2D
 @export var mensajes_intro: PackedStringArray = [
 	"Noche de Xantolo… el arco de caña ya está puesto, pero el ritual se rompió.",
 	"La ofrenda quedó dispersa por la sierra: la vela, la flor y los pétalos.",
-	"Los chaneques oyen tus pasos. Agáchate  [S]  para caminar en silencio.",
+	"Los chaneques no ven bien… pero oyen todo. El anillo de tus pasos muestra hasta dónde te oyen.",
+	"Son curiosos: lanza una piedrita  [R]  lejos y irán a ver qué fue.",
 ]
 @export var segundos_por_mensaje: float = 3.5
 
@@ -50,7 +51,10 @@ var _tip_oido := false
 var _tip_persecucion := false
 var _tip_copal := false
 var _tip_salto := false
+var _tutorial_listo := false
 var _aviso_falta := 0.0
+var _espera_piedra := 0.0
+const PIEDRITA := preload("res://script/piedrita.gd")
 
 
 func _ready() -> void:
@@ -84,6 +88,7 @@ func _intro() -> void:
 
 
 func _process(delta: float) -> void:
+	_espera_piedra = maxf(_espera_piedra - delta, 0.0)
 	_revisar_pantalla(false)
 	_revisar_tips()
 	_revisar_salida(delta)
@@ -118,6 +123,8 @@ func _revisar_pantalla(inicial: bool) -> void:
 	if not _vistas.has(p):
 		_vistas[p] = true
 		_mostrar_lugar(nombres_pantallas[p])
+		if p == 1 and not inicial:
+			_tutorial_chaneques()
 
 
 func _fijar_camara(p: int) -> void:
@@ -156,13 +163,22 @@ func _revisar_tips() -> void:
 	for c in get_tree().get_nodes_in_group("chaneques"):
 		if not _tip_oido and c.estado == "alerta":
 			_tip_oido = true
-			_decir("Te escuchan… agáchate y quédate quieta", 2.5)
+			_decir("¡Te oye!  Agáchate ya  [S] … o escóndete en un arbusto", 2.5)
 		elif not _tip_persecucion and c.estado == "persigue":
 			_tip_persecucion = true
 			_decir("¡Te descubrieron! Escóndete en un arbusto o quema copal  [Q]", 3.0)
-	if not _tip_salto and _pantalla == 1:
+	if not _tip_salto and _pantalla == 1 and _tutorial_listo and _jugador.nivel_ruido() >= 1.6:
 		_tip_salto = true
-		_decir("Saltar hace mucho ruido… espera a que los chaneques se esfumen", 3.5)
+		_decir("Saltar hace ruido: salta, espera un momento y vuelve a saltar… o espera a que se esfumen", 3.5)
+
+
+## La primera vez que ves a los chaneques, Chicomexochitl explica cómo pasar
+func _tutorial_chaneques() -> void:
+	await get_tree().create_timer(1.2, false).timeout
+	await _decir("Si no te oye, no te ve.", 2.5)
+	await _decir("Agáchate  [S]  y pasa junto a él: si el anillo no se marca, estás a salvo.", 4.0)
+	await _decir("¿Te estorba? Lanza una piedrita  [R]  lejos y irá a ver qué fue.", 3.5)
+	_tutorial_listo = true
 
 
 func _decir(txt: String, seg: float) -> void:
@@ -184,6 +200,19 @@ func _decir(txt: String, seg: float) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("usar_copal"):
 		_usar_copal()
+	elif event.is_action_pressed("lanzar_piedra"):
+		_lanzar_piedra()
+
+
+func _lanzar_piedra() -> void:
+	if _espera_piedra > 0.0 or not _jugando or _jugador == null or _jugador.atrapada:
+		return
+	_espera_piedra = 1.2
+	var anim = _jugador.get_node_or_null("AnimatedSprite2D")
+	var direccion := -1.0 if (anim != null and anim.flip_h) else 1.0
+	var p := PIEDRITA.new()
+	add_child(p)
+	p.lanzar(_jugador.global_position + Vector2(direccion * 18.0, -40.0), direccion)
 
 
 func _on_objeto_recogido(obj: ObjetoOfrenda) -> void:
@@ -347,7 +376,7 @@ func _actualizar_hud() -> void:
 	var vidas_txt := ""
 	if _jugador:
 		vidas_txt = "Vidas %d/%d   " % [_jugador.vidas, _jugador.vidas_max]
-	_hud.text = vidas_txt + "Vela %d/%d   Flor %d/%d   Pétalos %d/%d   Copal x%d  [Q]" % [
+	_hud.text = vidas_txt + "Vela %d/%d   Flor %d/%d   Pétalos %d/%d   Copal x%d [Q]   Piedrita [R]" % [
 		recogidos["vela"], total["vela"], recogidos["flor"], total["flor"],
 		recogidos["petalos"], total["petalos"], copal]
 

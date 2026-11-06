@@ -8,7 +8,8 @@ signal sin_vidas
 @export var velocidad_agachada: float = 55.0
 ## Anillo que muestra hasta dónde se oyen tus pasos (solo en niveles con chaneques)
 @export var mostrar_ruido: bool = true
-@export var radio_ruido: float = 170.0
+## Debe ser igual a "rango_oido" de los chaneques: el anillo muestra exactamente hasta dónde te oyen
+@export var radio_ruido: float = 190.0
 @export var fuerza_salto: float = -350.0
 @export var vidas_max: int = 3
 ## Actívalo en los niveles donde Xochik empieza mirando a la izquierda
@@ -32,6 +33,7 @@ var _mano: Sprite2D
 var _ruido_caida := 0.0      # segundos de ruido fuerte al caer de un salto
 var _en_suelo_antes := true
 var _radio_visible := 0.0
+var _te_oyen := false   # algún chaneque está dentro del anillo
 var _t_paso := 0.0
 
 
@@ -111,6 +113,14 @@ func _process(delta: float) -> void:
 	if mostrar_ruido and get_tree().has_group("chaneques"):
 		objetivo = nivel_ruido() * radio_ruido
 	_radio_visible = lerpf(_radio_visible, objetivo, 1.0 - exp(-8.0 * delta))
+	_te_oyen = false
+	if objetivo > 0.0:
+		for c in get_tree().get_nodes_in_group("chaneques"):
+			if c.visible and c.anim.modulate.a > 0.5 and c.global_position.distance_to(global_position) < objetivo:
+				_te_oyen = true
+	# En sigilo (agachada entre chaneques) Xochik se oscurece un poco: señal de que no la oyen
+	var sigilo := agachada and get_tree().has_group("chaneques")
+	anim.modulate = anim.modulate.lerp(Color(0.62, 0.62, 0.62) if sigilo else Color.WHITE, 1.0 - exp(-10.0 * delta))
 	queue_redraw()
 	if _mano.visible:
 		_mano.position = Vector2(-offset_mano.x if anim.flip_h else offset_mano.x, offset_mano.y)
@@ -134,7 +144,15 @@ func _draw() -> void:
 	if _radio_visible < 6.0:
 		return
 	var a := clampf(_radio_visible / (radio_ruido * 1.6), 0.0, 1.0)
-	draw_arc(Vector2.ZERO, _radio_visible, 0.0, TAU, 64, Color(1, 1, 1, 0.10 + 0.12 * a), 2.0, true)
+	if _te_oyen:
+		# Un chaneque está dentro: el anillo se marca fuerte y punteado
+		var pasos := 40
+		for i in pasos:
+			if i % 2 == 0:
+				var a0 := TAU * i / pasos
+				draw_arc(Vector2.ZERO, _radio_visible, a0, a0 + TAU / pasos, 4, Color(1, 1, 1, 0.75), 3.0, true)
+	else:
+		draw_arc(Vector2.ZERO, _radio_visible, 0.0, TAU, 64, Color(1, 1, 1, 0.16 + 0.14 * a), 2.0, true)
 
 
 func mostrar_en_mano(tex: Texture2D) -> void:

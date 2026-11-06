@@ -1,6 +1,7 @@
 extends CharacterBody2D
 ## La Llorona — patrulla el río. Si ve a Xochik, la persigue.
 ## Si la alcanza: con la pertenencia correcta encuentra paz; si no, Xochik pierde una vida.
+## Con algo en la mano, Xochik puede acercarse y ENTREGARLO con [E] (aparece el aviso sobre ella).
 ## Agacharse dentro de un Escondite la vuelve invisible para ella.
 
 signal calmada
@@ -18,6 +19,8 @@ signal calmada
 @export var amplitud_flote: float = 12.0
 ## (Flotando) A qué distancia de Xochik se detiene y ocurre el encuentro
 @export var distancia_encuentro: float = 110.0
+## Distancia desde la que Xochik puede entregarle lo que carga con [E]
+@export var distancia_entrega: float = 240.0
 
 var gravedad: float = ProjectSettings.get_setting("physics/2d/default_gravity")
 @onready var anim: AnimatedSprite2D = $AnimatedSprite2D
@@ -28,6 +31,8 @@ var estado: String = "patrulla"   # patrulla | persecucion | buscando | reaccion
 var _t_busqueda := 0.0
 var _icono: Label
 var _altura_base: float
+var _aviso_entrega: Label
+var _voz: Label
 var _t_flote := 0.0
 
 
@@ -44,6 +49,41 @@ func _ready() -> void:
 	_icono.position = Vector2(-6, -110)
 	_icono.visible = false
 	add_child(_icono)
+	_aviso_entrega = _crear_label(16, Vector2(-70, -150))
+	_voz = _crear_label(18, Vector2(-120, -185))
+
+
+func _crear_label(tam: int, pos: Vector2) -> Label:
+	var l := Label.new()
+	l.add_theme_font_size_override("font_size", tam)
+	l.add_theme_color_override("font_color", Color(0.95, 0.95, 0.95))
+	l.add_theme_color_override("font_outline_color", Color.BLACK)
+	l.add_theme_constant_override("outline_size", 5)
+	l.position = pos
+	l.visible = false
+	add_child(l)
+	return l
+
+
+func _process(_delta: float) -> void:
+	var j := get_tree().get_first_node_in_group("jugador") as CharacterBody2D
+	var puede: bool = j != null and not j.atrapada and j.objeto_en_mano != null \
+		and estado != "reaccion" and estado != "calmada" \
+		and global_position.distance_to(j.global_position) < distancia_entrega
+	_aviso_entrega.visible = puede
+	if puede:
+		_aviso_entrega.text = "[E] Entregar: " + j.objeto_en_mano.nombre
+		if Input.is_action_just_pressed("interactuar"):
+			_encuentro(j)
+
+
+## La Llorona habla (texto sobre ella)
+func _decir(txt: String, seg: float = 2.5) -> void:
+	_voz.text = txt
+	_voz.modulate.a = 1.0
+	_voz.visible = true
+	await get_tree().create_timer(seg, false).timeout
+	create_tween().tween_property(_voz, "modulate:a", 0.0, 0.8)
 
 
 func _physics_process(delta: float) -> void:
@@ -61,7 +101,7 @@ func _physics_process(delta: float) -> void:
 			if _ve_jugador(jugador, false):
 				estado = "persecucion"
 				Juego.sfx("llanto", -4.0)
-				_mostrar_icono("!", Color(1, 0.4, 0.4))
+				_mostrar_icono("!", Color.WHITE)
 		"persecucion":
 			if _ve_jugador(jugador, true):
 				_t_busqueda = 0.0
@@ -77,7 +117,7 @@ func _physics_process(delta: float) -> void:
 			else:
 				estado = "buscando"
 				_t_busqueda = 0.0
-				_mostrar_icono("?", Color(1, 0.85, 0.55))
+				_mostrar_icono("?", Color(0.8, 0.8, 0.8))
 		"buscando":
 			velocity.x = 0.0
 			if flota:
@@ -88,7 +128,7 @@ func _physics_process(delta: float) -> void:
 			if _ve_jugador(jugador, false):
 				estado = "persecucion"
 				Juego.sfx("llanto", -4.0)
-				_mostrar_icono("!", Color(1, 0.4, 0.4))
+				_mostrar_icono("!", Color.WHITE)
 			elif _t_busqueda >= tiempo_busqueda:
 				estado = "patrulla"
 				_icono.visible = false
@@ -164,8 +204,10 @@ func _encuentro(jugador: CharacterBody2D) -> void:
 		return
 	# Señuelo o manos vacías: grito y Xochik pierde una vida
 	estado = "reaccion"
+	_aviso_entrega.visible = false
+	_decir("¡Eso no era de mis hijos…!" if obj else "¿Dónde están mis hijos…?")
 	anim.speed_scale = 1.0
-	_mostrar_icono("!", Color(1, 0.4, 0.4))
+	_mostrar_icono("!", Color.WHITE)
 	anim.flip_h = jugador.global_position.x < global_position.x
 	_play("cry")
 	if obj:
@@ -187,6 +229,8 @@ func _calmarse(jugador: CharacterBody2D, obj: Node) -> void:
 	$CollisionShape2D.set_deferred("disabled", true)
 	jugador.objeto_en_mano = null
 	jugador.ocultar_mano()
+	_aviso_entrega.visible = false
+	_decir("Mi niño… su " + String(obj.nombre).to_lower() + "…", 3.0)
 	obj.queue_free()
 	anim.flip_h = jugador.global_position.x < global_position.x
 	_play("cry")

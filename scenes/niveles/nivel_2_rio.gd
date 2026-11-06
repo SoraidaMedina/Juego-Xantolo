@@ -1,7 +1,7 @@
 extends Node2D
 ## Nivel 2 — El Río de la Llorona
 ## Objetivo: encontrar la pertenencia correcta de sus hijos entre señuelos
-## y entregársela (dejar que te alcance cargándola).
+## y entregársela: acercarse con ella en la mano y pulsar [E] (o dejar que te alcance).
 
 @export var ancho_nivel: int = 1152
 @export var alto_nivel: int = 648
@@ -12,16 +12,13 @@ extends Node2D
 ## Mensajes de ayuda que salen después de la pista (uno tras otro)
 ## Diálogo de la abuela (o mensajes en pantalla si no hay abuela), en orden
 @export var mensajes_tutorial: PackedStringArray = [
-	"Ay, mija… ven, acércate. Este es el río de la Llorona.",
-	"Dicen que hace mucho tiempo perdió a sus hijos en estas aguas… y desde entonces los busca, llorando, cada noche de Xantolo.",
-	"Su llanto no es de maldad, es de tristeza. Lo que ella necesita es recordarlos.",
-	"Busca lo que era de su hijo. Él era muy inquieto… nunca se estaba quieto, igual que su juguete favorito.",
-	"Lo enredaba con un cordel, lo lanzaba al suelo… y aquello daba vueltas y vueltas, bailando sobre la tierra hasta cansarse.",
-	"Pero fíjate bien… por la orilla hay otras cosas tiradas. No te confundas. Toma solo una con [E].",
-	"Si la Llorona te ve, te va a seguir. Corre a los arbustos y agáchate [%agachar%]; ahí no te verá.",
-	"Cuando creas tener lo que era suyo, no huyas. Deja que se acerque… y entrégaselo.",
-	"Si te equivocas, su llanto te alcanzará. Piensa bien antes de escoger, mija.",
-	"Y cuidado con el agua, mija. Salta de piedra en piedra. Ve con Dios, que las ánimas te acompañen.",
+	"Ay, mija… este es el río de la Llorona. Cada noche de Xantolo busca a sus hijos, llorando.",
+	"Su llanto no es de maldad, es de tristeza. Solo se calma si le devuelves algo de su hijo.",
+	"Su hijo era muy inquieto. Su juguete favorito lo enredaba con un cordel, lo lanzaba… y bailaba dando vueltas sobre la tierra.",
+	"Por la orilla hay cosas tiradas. Toma una con [E]. Solo puedes cargar una: si tomas otra, la primera regresa a su lugar.",
+	"Cuando tengas la correcta, acércate a la Llorona y entrégasela con [E]. Si te equivocas, perderás una vida.",
+	"Si te ve con las manos vacías, te seguirá: escóndete en un arbusto y agáchate [%agachar%].",
+	"Y cuidado con el agua, mija: salta de piedra en piedra. Ve con Dios.",
 ]
 @export var segundos_por_mensaje: float = 4.0
 
@@ -31,6 +28,8 @@ var _aviso_persecucion := false
 var _hud: Label
 var _mensaje: Label
 var _terminado := false
+var _llevaba := ""
+var _aviso_cambio := false
 
 
 func _ready() -> void:
@@ -42,7 +41,7 @@ func _ready() -> void:
 		_jugador.vidas_cambiadas.connect(func(_v): _actualizar_hud())
 		_jugador.sin_vidas.connect(_game_over)
 	for p in get_tree().get_nodes_in_group("pertenencias"):
-		p.tomada.connect(func(_o): _actualizar_hud())
+		p.tomada.connect(_al_tomar)
 	var llorona = get_tree().get_first_node_in_group("llorona")
 	if llorona:
 		llorona.calmada.connect(_victoria)
@@ -85,6 +84,15 @@ func _process(_delta: float) -> void:
 			_mostrar_mensaje(_teclas("¡Te vio! Corre a un arbusto y agáchate [%agachar%]"), 3.0)
 
 
+## Explica por qué "regresa" el objeto anterior al tomar otro
+func _al_tomar(obj: Node) -> void:
+	if _llevaba != "" and _llevaba != obj.nombre and not _aviso_cambio:
+		_aviso_cambio = true
+		_mostrar_mensaje("Dejaste " + _llevaba.to_lower() + " en su lugar: solo puedes cargar una cosa.", 3.0)
+	_llevaba = obj.nombre
+	_actualizar_hud()
+
+
 func _configurar_camara() -> void:
 	if _jugador == null:
 		return
@@ -111,6 +119,9 @@ func _configurar_camara() -> void:
 
 func _victoria() -> void:
 	_terminado = true
+	for p in get_tree().get_nodes_in_group("pertenencias"):
+		if p.es_correcto and p.textura:
+			Juego.agregar_ofrenda(p.textura.resource_path)
 	_mostrar_mensaje("La Llorona reconoce a sus hijos...\nY por fin encuentra paz", 0.0)
 	await get_tree().create_timer(4.0, false).timeout
 	Juego.ir_a(siguiente_nivel)  # vacío = siguiente nivel de la lista
@@ -135,7 +146,7 @@ func _crear_hud() -> void:
 	_mensaje.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_mensaje.grow_horizontal = Control.GROW_DIRECTION_BOTH
 	_mensaje.grow_vertical = Control.GROW_DIRECTION_BOTH
-	_mensaje.modulate = Color(1.0, 0.85, 0.55)
+	_mensaje.modulate = Color(0.95, 0.95, 0.95)
 	_mensaje.visible = false
 	capa.add_child(_mensaje)
 
@@ -178,9 +189,14 @@ func _label_base(tam: int) -> Label:
 func _actualizar_hud() -> void:
 	if _jugador == null or _hud == null:
 		return
-	var llevas: String = _jugador.objeto_en_mano.nombre if _jugador.objeto_en_mano else "nada"
 	var escondida := "   [Escondida]" if _jugador.esta_escondida() else ""
-	_hud.text = "Vidas %d/%d   Llevas: %s%s" % [_jugador.vidas, _jugador.vidas_max, llevas, escondida]
+	var linea2 := "Objetivo: devuélvele a la Llorona el juguete favorito de su hijo"
+	if _jugador.objeto_en_mano:
+		_llevaba = _jugador.objeto_en_mano.nombre
+		linea2 = "Llevas: %s   →   acércate a la Llorona y pulsa [E] para entregarlo" % _llevaba
+	else:
+		_llevaba = ""
+	_hud.text = "Vidas %d/%d%s\n%s" % [_jugador.vidas, _jugador.vidas_max, escondida, linea2]
 
 
 func _mostrar_mensaje(txt: String, duracion: float) -> void:
