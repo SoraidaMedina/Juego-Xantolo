@@ -57,8 +57,32 @@ def vela():
     return A.normalizar(A.reverb(soplo * 0.6 + brillo, 1.0, 0.3), 0.5)
 
 
+def susto():
+    """Golpe de susto: cluster disonante de violines + chirrido + golpe grave."""
+    out = A.silencio(1.8)
+    for n_, c in (("A", 0), ("A#", 0), ("B", -20), ("F", 30)):
+        A.poner(out, 0, A.violin(A.f(n_, 5, c), 1.2, 1.2, vibrato=11, prof=0.03, ataque=0.005, aspereza=0.25), 1.0)
+    t = A.t_(1.2)
+    golpe = np.sin(2 * np.pi * 45 * t * (1 - 0.4 * t)) * np.exp(-t * 5) * 1.5
+    golpe += A.filtro(rng.standard_normal(len(t)), "low", 600) * np.exp(-t * 10)
+    A.poner(out, 0, golpe, 1.0)
+    chirrido = A.filtro(rng.standard_normal(len(t)), "band", [2500, 7000]) * np.exp(-t * 6)
+    A.poner(out, 0.02, chirrido, 0.4)
+    return A.normalizar(A.reverb(out, 1.5, 0.35), 0.95)
+
+
+def susto_suave():
+    """Para sustos de ambiente: susurro + nota que roza."""
+    out = A.silencio(2.2)
+    v = A.voz(lambda tt: 180 + 30 * np.sin(tt * 9), 1.4, [(900, 300, 1.0), (2500, 500, 0.6)], aliento=2.0)
+    A.poner(out, 0.0, v * np.sin(np.pi * A.t_(1.4) / 1.4), 0.5)
+    A.poner(out, 0.1, A.violin(A.f("D#", 6), 1.6, 0.6, vibrato=6, ataque=0.3, aspereza=0.1), 1.0)
+    return A.normalizar(A.reverb(out, 2.0, 0.5), 0.7)
+
+
 if __name__ == "__main__":
     os.makedirs(os.path.join(A.TMP, "sfx"), exist_ok=True)
-    for nombre, fn in [("piedrita", piedrita), ("campanas", campanas), ("murmullo", murmullo), ("vela", vela)]:
+    for nombre, fn in [("piedrita", piedrita), ("campanas", campanas), ("murmullo", murmullo), ("vela", vela),
+                       ("susto", susto), ("susto_suave", susto_suave)]:
         A.guardar("sfx/" + nombre, fn(), 4)
         print(nombre)

@@ -29,6 +29,12 @@ var vidas: int
 var agachada: bool = false
 var en_escondite: bool = false
 var objeto_en_mano: Node = null   # pertenencia que carga (nivel 2)
+## Talismanes (nivel 3): papel picado sella trampas espirituales; el amuleto oculta ante el Nahual
+var papel_picado: int = 0
+var amuletos: int = 0
+var protegida: bool = false
+@export var duracion_amuleto: float = 5.0
+var _t_amuleto := 0.0
 var _mano: Sprite2D
 var _ruido_caida := 0.0      # segundos de ruido fuerte al caer de un salto
 var _en_suelo_antes := true
@@ -107,7 +113,28 @@ func nivel_ruido() -> float:
 	return 1.0 if absf(velocity.x) > 10.0 else 0.0
 
 
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("amuleto"):
+		usar_amuleto()
+
+
+## Amuleto bordado: por unos segundos el Nahual no puede sentir a Xochik
+func usar_amuleto() -> void:
+	if amuletos <= 0 or protegida or atrapada:
+		return
+	amuletos -= 1
+	protegida = true
+	_t_amuleto = duracion_amuleto
+	Juego.sfx("vela", -3.0, 0.6)
+
+
 func _process(delta: float) -> void:
+	if protegida:
+		_t_amuleto -= delta
+		anim.modulate.a = 0.45 + 0.1 * sin(_t_amuleto * 8.0)
+		if _t_amuleto <= 0.0:
+			protegida = false
+			anim.modulate.a = 1.0
 	# Anillo de ruido
 	var objetivo := 0.0
 	if mostrar_ruido and get_tree().has_group("chaneques"):
@@ -141,6 +168,16 @@ func _actualizar_animacion(dir: float) -> void:
 
 
 func _draw() -> void:
+	if protegida:
+		# Nahui ollin bordado girando alrededor de Xochik
+		var giro := _t_amuleto * 1.5
+		var a := clampf(_t_amuleto, 0.0, 1.0)
+		for k in 4:
+			var ang := giro + k * PI / 2.0 + PI / 4.0
+			var d := Vector2(cos(ang), sin(ang))
+			draw_line(d * 30.0, d * 70.0, Color(1, 1, 1, 0.6 * a), 4.0)
+		draw_circle(Vector2.ZERO, 10.0, Color(1, 1, 1, 0.35 * a))
+		draw_arc(Vector2.ZERO, 78.0, 0.0, TAU, 48, Color(1, 1, 1, 0.25 * a), 2.0)
 	if _radio_visible < 6.0:
 		return
 	var a := clampf(_radio_visible / (radio_ruido * 1.6), 0.0, 1.0)
@@ -188,7 +225,7 @@ func ser_atrapada(motivo: String = "") -> void:
 	anim.play("idle")
 
 	var golpe := create_tween()
-	golpe.tween_property(anim, "modulate", Color(1, 0.4, 0.4), 0.1)
+	golpe.tween_property(anim, "modulate", Color(0.3, 0.3, 0.3), 0.1)
 	golpe.tween_property(anim, "modulate", Color.WHITE, 0.1)
 	await golpe.finished
 
@@ -219,7 +256,7 @@ func _aviso_vida(motivo: String) -> void:
 	l.text = (motivo + "\n" if motivo != "" else "") + "-1 vida"
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	l.add_theme_font_size_override("font_size", 22)
-	l.add_theme_color_override("font_color", Color(1.0, 0.5, 0.45))
+	l.add_theme_color_override("font_color", Color(0.95, 0.95, 0.95))
 	l.add_theme_color_override("font_outline_color", Color.BLACK)
 	l.add_theme_constant_override("outline_size", 6)
 	l.set_anchors_preset(Control.PRESET_CENTER)

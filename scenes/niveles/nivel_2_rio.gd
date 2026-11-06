@@ -81,6 +81,7 @@ func _process(_delta: float) -> void:
 		var ll = get_tree().get_first_node_in_group("llorona")
 		if ll and ll.estado == "persecucion":
 			_aviso_persecucion = true
+			Juego.susto_ambiente("llorona")
 			_mostrar_mensaje(_teclas("¡Te vio! Corre a un arbusto y agáchate [%agachar%]"), 3.0)
 
 

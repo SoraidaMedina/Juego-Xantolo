@@ -44,15 +44,24 @@ size = Vector2(90, 46)
 size = Vector2(80, 92)
 
 [sub_resource type="RectangleShape2D" id="Rect_8"]
-size = Vector2(164, 44)
+size = Vector2(90, 46)
 
 [sub_resource type="RectangleShape2D" id="Rect_9"]
-size = Vector2(80, 92)
+size = Vector2(90, 46)
 
 [sub_resource type="RectangleShape2D" id="Rect_10"]
-size = Vector2(72, 138)
+size = Vector2(80, 92)
 
 [sub_resource type="RectangleShape2D" id="Rect_11"]
+size = Vector2(72, 138)
+
+[sub_resource type="RectangleShape2D" id="Rect_12"]
+size = Vector2(80, 92)
+
+[sub_resource type="RectangleShape2D" id="Rect_13"]
+size = Vector2(90, 46)
+
+[sub_resource type="RectangleShape2D" id="Rect_14"]
 size = Vector2(90, 46)
 
 [node name="Nivel1Sierra" type="Node2D"]
@@ -116,11 +125,11 @@ position = Vector2(190, 400)
 [node name="ArcoXantolo" type="Sprite2D" parent="."]
 z_index = -1
 texture_filter = 1
-position = Vector2(560, 374)
+position = Vector2(470, 374)
 texture = ExtResource("16_r")
 
 [node name="P1_Tronco" type="StaticBody2D" parent="."]
-position = Vector2(790, 560)
+position = Vector2(720, 560)
 
 [node name="Sprite2D" type="Sprite2D" parent="P1_Tronco"]
 texture_filter = 1
@@ -132,7 +141,7 @@ position = Vector2(0, -22.0)
 shape = SubResource("Rect_5")
 
 [node name="P1_RocaBaja" type="StaticBody2D" parent="."]
-position = Vector2(950, 560)
+position = Vector2(880, 560)
 
 [node name="Sprite2D" type="Sprite2D" parent="P1_RocaBaja"]
 texture_filter = 1
@@ -144,7 +153,7 @@ position = Vector2(0, -23.0)
 shape = SubResource("Rect_6")
 
 [node name="P1_RocaMedia" type="StaticBody2D" parent="."]
-position = Vector2(1050, 560)
+position = Vector2(965, 560)
 
 [node name="Sprite2D" type="Sprite2D" parent="P1_RocaMedia"]
 texture_filter = 1
@@ -155,39 +164,51 @@ texture = ExtResource("18_r")
 position = Vector2(0, -46.0)
 shape = SubResource("Rect_7")
 
+[node name="P1_RocaBaja2" type="StaticBody2D" parent="."]
+position = Vector2(1050, 560)
+
+[node name="Sprite2D" type="Sprite2D" parent="P1_RocaBaja2"]
+texture_filter = 1
+position = Vector2(0, -25.0)
+texture = ExtResource("17_r")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="P1_RocaBaja2"]
+position = Vector2(0, -23.0)
+shape = SubResource("Rect_8")
+
 [node name="Copal1" parent="." instance=ExtResource("8_r")]
-position = Vector2(1050, 432)
+position = Vector2(965, 432)
 tipo = "copal"
 textura = ExtResource("14_r")
 reaparece = false
 
 [node name="Copal2" parent="." instance=ExtResource("8_r")]
-position = Vector2(1302, 510)
+position = Vector2(1282, 510)
 tipo = "copal"
 textura = ExtResource("14_r")
 reaparece = false
 
 [node name="P2_Arbusto1" parent="." instance=ExtResource("9_r")]
-position = Vector2(1442, 510)
+position = Vector2(1422, 510)
 
 [node name="P2_Chaneque1" parent="." instance=ExtResource("7_r")]
-position = Vector2(1612, 495)
-distancia_patrulla = 120
+position = Vector2(1582, 495)
+distancia_patrulla = 110
 
-[node name="P2_Tronco" type="StaticBody2D" parent="."]
-position = Vector2(1822, 560)
+[node name="P2_RocaBaja" type="StaticBody2D" parent="."]
+position = Vector2(1792, 560)
 
-[node name="Sprite2D" type="Sprite2D" parent="P2_Tronco"]
+[node name="Sprite2D" type="Sprite2D" parent="P2_RocaBaja"]
 texture_filter = 1
-position = Vector2(0, -23.0)
-texture = ExtResource("20_r")
+position = Vector2(0, -25.0)
+texture = ExtResource("17_r")
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="P2_Tronco"]
-position = Vector2(0, -22.0)
-shape = SubResource("Rect_8")
+[node name="CollisionShape2D" type="CollisionShape2D" parent="P2_RocaBaja"]
+position = Vector2(0, -23.0)
+shape = SubResource("Rect_9")
 
 [node name="P2_RocaMedia" type="StaticBody2D" parent="."]
-position = Vector2(1952, 560)
+position = Vector2(1877, 560)
 
 [node name="Sprite2D" type="Sprite2D" parent="P2_RocaMedia"]
 texture_filter = 1
@@ -196,10 +217,10 @@ texture = ExtResource("18_r")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="P2_RocaMedia"]
 position = Vector2(0, -46.0)
-shape = SubResource("Rect_9")
+shape = SubResource("Rect_10")
 
 [node name="P2_RocaAlta" type="StaticBody2D" parent="."]
-position = Vector2(2042, 560)
+position = Vector2(1953, 560)
 
 [node name="Sprite2D" type="Sprite2D" parent="P2_RocaAlta"]
 texture_filter = 1
@@ -208,23 +229,47 @@ texture = ExtResource("19_r")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="P2_RocaAlta"]
 position = Vector2(0, -69.0)
-shape = SubResource("Rect_10")
+shape = SubResource("Rect_11")
+
+[node name="P2_RocaMedia2" type="StaticBody2D" parent="."]
+position = Vector2(2029, 560)
+
+[node name="Sprite2D" type="Sprite2D" parent="P2_RocaMedia2"]
+texture_filter = 1
+position = Vector2(0, -48.0)
+texture = ExtResource("18_r")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="P2_RocaMedia2"]
+position = Vector2(0, -46.0)
+shape = SubResource("Rect_12")
+
+[node name="P2_RocaBaja2" type="StaticBody2D" parent="."]
+position = Vector2(2114, 560)
+
+[node name="Sprite2D" type="Sprite2D" parent="P2_RocaBaja2"]
+texture_filter = 1
+position = Vector2(0, -25.0)
+texture = ExtResource("17_r")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="P2_RocaBaja2"]
+position = Vector2(0, -23.0)
+shape = SubResource("Rect_13")
 
 [node name="Flor" parent="." instance=ExtResource("8_r")]
-position = Vector2(2042, 386)
+position = Vector2(1953, 386)
 tipo = "flor"
 textura = ExtResource("13_r")
 reaparece = false
 
 [node name="P2_Arbusto2" parent="." instance=ExtResource("9_r")]
-position = Vector2(2152, 510)
+position = Vector2(2202, 510)
 
 [node name="P2_Chaneque2" parent="." instance=ExtResource("7_r")]
-position = Vector2(2212, 495)
-distancia_patrulla = 70
+position = Vector2(2242, 495)
+distancia_patrulla = 45
 
 [node name="Vela" parent="." instance=ExtResource("8_r")]
-position = Vector2(2262, 510)
+position = Vector2(2272, 510)
 tipo = "vela"
 textura = ExtResource("12_r")
 reaparece = false
@@ -286,4 +331,4 @@ texture = ExtResource("17_r")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="P3_RocaBaja"]
 position = Vector2(0, -23.0)
-shape = SubResource("Rect_11")
+shape = SubResource("Rect_14")

@@ -32,6 +32,11 @@ var _texto_gameover: Label
 var _cambiando := false
 ## Lo que Xochik ha recuperado en el camino (rutas de imagen). El altar final se arma con esto.
 var ofrenda: Array[String] = []
+## Sustos (jumpscares) activados. Se cambia desde el menú principal.
+var sustos_activos := true
+var _capa_susto: CanvasLayer
+var _imagen_susto: TextureRect
+var _susto_en_curso := false
 var _musica: Array[AudioStreamPlayer] = []
 var _musica_actual := 0
 var _nombre_musica := ""
@@ -48,6 +53,7 @@ func _ready() -> void:
 	_asegurar_accion("usar_copal", KEY_Q)
 	_asegurar_accion("ocultar_luz", KEY_F)
 	_asegurar_accion("lanzar_piedra", KEY_R)
+	_asegurar_accion("amuleto", KEY_C)
 	_crear_pausa()
 	_crear_gameover()
 	_negro = ColorRect.new()
@@ -298,6 +304,61 @@ func _asegurar_accion(nombre: String, tecla: Key) -> void:
 	var nuevo := InputEventKey.new()
 	nuevo.physical_keycode = tecla
 	InputMap.action_add_event(nombre, nuevo)
+
+
+# ---------- Sustos ----------
+
+## Susto fuerte: la cara del enemigo llena la pantalla con un golpe de sonido (al atraparte)
+func susto(nombre: String) -> void:
+	if not sustos_activos or _susto_en_curso:
+		return
+	await _mostrar_susto(nombre, 1.0, 0.65, "susto", 0.0)
+
+
+## Susto de ambiente: un vistazo breve y tenue, con un susurro (no hace daño)
+func susto_ambiente(nombre: String) -> void:
+	if not sustos_activos or _susto_en_curso:
+		return
+	await _mostrar_susto(nombre, 0.4, 0.22, "susto_suave", -4.0)
+
+
+func _mostrar_susto(nombre: String, alfa: float, dur: float, sonido: String, vol: float) -> void:
+	var ruta := "res://assets/sustos/susto_%s.png" % nombre
+	if not ResourceLoader.exists(ruta):
+		return
+	_susto_en_curso = true
+	if _capa_susto == null:
+		_capa_susto = CanvasLayer.new()
+		_capa_susto.layer = 95
+		add_child(_capa_susto)
+		_imagen_susto = TextureRect.new()
+		_imagen_susto.set_anchors_preset(Control.PRESET_FULL_RECT)
+		_imagen_susto.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		_imagen_susto.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+		_imagen_susto.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		_imagen_susto.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_imagen_susto.pivot_offset = get_viewport().get_visible_rect().size / 2.0
+		_capa_susto.add_child(_imagen_susto)
+	_imagen_susto.texture = load(ruta)
+	_imagen_susto.modulate = Color(1, 1, 1, alfa)
+	_imagen_susto.scale = Vector2.ONE
+	_imagen_susto.visible = true
+	sfx(sonido, vol)
+	# Temblor, parpadeo y acercamiento
+	var t := 0.0
+	while t < dur:
+		_imagen_susto.position = Vector2(randf_range(-14, 14), randf_range(-10, 10)) * alfa
+		_imagen_susto.scale = Vector2.ONE * (1.0 + t / dur * 0.08)
+		_imagen_susto.visible = randf() > 0.12
+		await get_tree().create_timer(0.03, true, false, true).timeout
+		t += 0.03
+	_imagen_susto.visible = true
+	_imagen_susto.position = Vector2.ZERO
+	var tw := create_tween()
+	tw.tween_property(_imagen_susto, "modulate:a", 0.0, 0.25)
+	await tw.finished
+	_imagen_susto.visible = false
+	_susto_en_curso = false
 
 
 # ---------- Audio ----------

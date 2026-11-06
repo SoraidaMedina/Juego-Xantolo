@@ -6,7 +6,7 @@ class_name ObjetoOfrenda
 
 signal recogido(objeto: ObjetoOfrenda)
 
-@export_enum("vela", "flor", "copal", "petalos") var tipo: String = "vela"
+@export_enum("vela", "flor", "copal", "petalos", "papel_picado", "amuleto") var tipo: String = "vela"
 @export var textura: Texture2D:
 	set(valor):
 		textura = valor
@@ -31,6 +31,8 @@ const NOMBRES := {
 	"flor": "Flor de cempasúchil",
 	"copal": "Copal",
 	"petalos": "Pétalos de cempasúchil",
+	"papel_picado": "Papel picado",
+	"amuleto": "Amuleto bordado",
 }
 
 var _halo: Sprite2D

@@ -266,6 +266,7 @@ func _atrapar(j: CharacterBody2D) -> void:
 	anim.speed_scale = 1.0
 	_mostrar_icono("!", Color.WHITE)
 	_play("cry")
+	Juego.susto("chaneque")
 	j.ser_atrapada("Los chaneques te atraparon")
 	var gen := _gen
 	await get_tree().create_timer(1.2, false).timeout

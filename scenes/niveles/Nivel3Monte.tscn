@@ -10,6 +10,10 @@
 [ext_resource type="PackedScene" path="res://scenes/plataforma.tscn" id="15_pgjh1"]
 [ext_resource type="PackedScene" path="res://scenes/escondite.tscn" id="17_msny7"]
 [ext_resource type="PackedScene" path="res://scenes/personajes/Abuela.tscn" id="18_h5h1e"]
+[ext_resource type="PackedScene" path="res://scenes/objeto_ofrenda.tscn" id="40_obj"]
+[ext_resource type="Texture2D" path="res://assets/objetos/papel_picado.png" id="41_papel"]
+[ext_resource type="Texture2D" path="res://assets/talismanes/amuleto.png" id="42_amuleto"]
+[ext_resource type="Script" path="res://script/trampa_espiritual.gd" id="43_trampa"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_hgy67"]
 size = Vector2(195, 29.5)
@@ -140,6 +144,24 @@ position = Vector2(160, 511)
 
 [node name="Plataforma10" parent="." unique_id=1156823571 instance=ExtResource("15_pgjh1")]
 position = Vector2(269, 473)
+
+[node name="PapelPicado" parent="." instance=ExtResource("40_obj")]
+position = Vector2(1109, 515)
+tipo = "papel_picado"
+textura = ExtResource("41_papel")
+escala = 0.12
+reaparece = false
+
+[node name="Amuleto" parent="." instance=ExtResource("40_obj")]
+position = Vector2(963, 600)
+tipo = "amuleto"
+textura = ExtResource("42_amuleto")
+escala = 0.9
+reaparece = false
+
+[node name="TrampaEspiritual" type="Area2D" parent="."]
+position = Vector2(405, 674)
+script = ExtResource("43_trampa")
 
 [editable path="Escondite"]
 [editable path="Escondite2"]

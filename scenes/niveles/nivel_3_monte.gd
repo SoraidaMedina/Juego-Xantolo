@@ -21,6 +21,8 @@ extends Node2D
 	"Esa luz se gasta mientras brilla y regresa cuando la ocultas. No la desperdicies.",
 	"Si viene hacia ti, no corras, mija: quieta y con la luz oculta… pasará de largo.",
 	"Si encuentras arbustos, agáchate [%agachar%] entre ellos. Ahí no te puede ver.",
+	"Más abajo las ánimas perdidas dejaron una trampa: manos que salen de la niebla. Séllala con papel picado [E].",
+	"Y si tu abuelo te dejó su amuleto bordado, úsalo [C]: por un momento el Nahual no podrá sentirte.",
 	"Sube por las rocas hasta el hueco de la montaña. Por dentro de la cueva se llega al pueblo.",
 	"Llega antes del amanecer, mija. Tu familia te espera.",
 ]
@@ -62,7 +64,22 @@ func _ready() -> void:
 	var meta = get_tree().get_first_node_in_group("meta")
 	if meta:
 		meta.alcanzada.connect(_victoria)
+	for obj in get_tree().get_nodes_in_group("recolectable"):
+		obj.recogido.connect(_al_recoger)
 	_tutorial()
+
+
+func _al_recoger(obj: Node) -> void:
+	if _jugador == null:
+		return
+	match obj.tipo:
+		"papel_picado":
+			_jugador.papel_picado += 1
+			_mostrar_mensaje("Papel picado: sella la trampa de las ánimas  [E]", 3.0)
+		"amuleto":
+			_jugador.amuletos += 2
+			_mostrar_mensaje("Amuleto bordado (2 usos): el Nahual no te sentirá por un momento  [C]", 3.5)
+	_actualizar_hud()
 
 
 ## La consulta el Nahual: ¿se ve la luz de Xochik?
@@ -109,6 +126,7 @@ func _on_vigilancia(activa: bool) -> void:
 	_alerta.visible = _vigilando > 0
 	if activa and not _aviso_mostrado:
 		_aviso_mostrado = true
+		Juego.susto_ambiente("nahual")
 		_mostrar_mensaje(_teclas("¡Te busca! Quédate quieta y oculta la luz [F]"), 2.5)
 
 
@@ -249,12 +267,12 @@ func _crear_hud() -> void:
 
 	var etiqueta := _label_base(13)
 	etiqueta.text = "Luz"
-	etiqueta.position = Vector2(16, 40)
+	etiqueta.position = Vector2(16, 62)
 	capa.add_child(etiqueta)
 
 	_barra = ProgressBar.new()
 	_barra.show_percentage = false
-	_barra.position = Vector2(52, 44)
+	_barra.position = Vector2(52, 66)
 	_barra.size = Vector2(160, 12)
 	_barra.max_value = luz_max
 	var fondo_barra := StyleBoxFlat.new()
@@ -262,7 +280,7 @@ func _crear_hud() -> void:
 	fondo_barra.border_color = Color(1, 1, 1, 0.3)
 	fondo_barra.set_border_width_all(1)
 	var relleno := StyleBoxFlat.new()
-	relleno.bg_color = Color(1.0, 0.82, 0.5)
+	relleno.bg_color = Color(0.88, 0.88, 0.88)
 	_barra.add_theme_stylebox_override("background", fondo_barra)
 	_barra.add_theme_stylebox_override("fill", relleno)
 	capa.add_child(_barra)
@@ -273,7 +291,7 @@ func _crear_hud() -> void:
 	_alerta.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_alerta.grow_horizontal = Control.GROW_DIRECTION_BOTH
 	_alerta.position.y = 14
-	_alerta.modulate = Color(1.0, 0.45, 0.35)
+	_alerta.modulate = Color(1, 1, 1)
 	_alerta.visible = false
 	capa.add_child(_alerta)
 
@@ -282,7 +300,7 @@ func _crear_hud() -> void:
 	_mensaje.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_mensaje.grow_horizontal = Control.GROW_DIRECTION_BOTH
 	_mensaje.grow_vertical = Control.GROW_DIRECTION_BOTH
-	_mensaje.modulate = Color(1.0, 0.85, 0.55)
+	_mensaje.modulate = Color(0.95, 0.95, 0.95)
 	_mensaje.visible = false
 	capa.add_child(_mensaje)
 
@@ -310,11 +328,14 @@ func _actualizar_hud() -> void:
 		txt = "Vidas %d/%d" % [_jugador.vidas, _jugador.vidas_max]
 		if _jugador.esta_escondida():
 			txt += "   [Escondida]"
+		if _jugador.protegida:
+			txt += "   [Amuleto]"
+		txt += "\nPapel picado x%d   Amuleto x%d [C]" % [_jugador.papel_picado, _jugador.amuletos]
 	if not luz_visible():
 		txt += "   [Luz oculta]"
 	_hud.text = txt
 	_barra.value = luz
-	_barra.modulate = Color(1, 0.5, 0.5) if _luz_agotada else Color.WHITE
+	_barra.modulate = Color(0.45, 0.45, 0.45) if _luz_agotada else Color.WHITE
 	if _alerta.visible:
 		_alerta.modulate.a = 0.6 + 0.4 * sin(Time.get_ticks_msec() / 120.0)
 

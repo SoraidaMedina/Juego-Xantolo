@@ -155,25 +155,30 @@ nodo(f'''[node name="Chicomexochitl" parent="." instance=ExtResource("{R_CHICO}"
 position = Vector2(190, 400)''')
 
 # ---------- Pantalla 1: la vereda del cañaveral (aprender sin peligro) ----------
-decorado("ArcoXantolo", "arco_xantolo", 560)
-roca("P1_Tronco", "tronco", 790)                 # saltar por encima
-roca("P1_RocaBaja", "roca_baja", 950)            # escalón 1
-roca("P1_RocaMedia", "roca_media", 1050)         # escalón 2, con copal arriba
-objeto("Copal1", "copal", 1050, PISO - 92 - 36)
+# Las rocas forman escalera de los DOS lados (pirámide): siempre se puede regresar.
+decorado("ArcoXantolo", "arco_xantolo", 470)
+roca("P1_Tronco", "tronco", 720)                 # saltar por encima
+roca("P1_RocaBaja", "roca_baja", 880)            # escalón 1
+roca("P1_RocaMedia", "roca_media", 965)          # escalón 2, con copal arriba
+roca("P1_RocaBaja2", "roca_baja", 1050)          # escalón de bajada (y de regreso)
+objeto("Copal1", "copal", 965, PISO - 92 - 36)
 
 # ---------- Pantalla 2: el bosque de los chaneques ----------
 b = P[1]
-objeto("Copal2", "copal", b + 150, 510)
-arbusto("P2_Arbusto1", b + 290)
-chaneque("P2_Chaneque1", b + 460, 120)          # cuida el paso hacia la torre de rocas
-# La flor está en lo alto: tronco -> roca media -> roca alta. Saltar hace ruido: salta, espera, salta.
-roca("P2_Tronco", "tronco", b + 670)
-roca("P2_RocaMedia", "roca_media", b + 800)
-roca("P2_RocaAlta", "roca_alta", b + 890)
-objeto("Flor", "flor", b + 890, PISO - 138 - 36)
-arbusto("P2_Arbusto2", b + 1000)
-chaneque("P2_Chaneque2", b + 1060, 70)           # cuida la vela
-objeto("Vela", "vela", b + 1110, 510)
+objeto("Copal2", "copal", b + 130, 510)
+arbusto("P2_Arbusto1", b + 270)
+chaneque("P2_Chaneque1", b + 430, 110)          # cuida el paso hacia la pirámide de rocas
+# La flor está en la cima de una pirámide: baja -> media -> ALTA -> media -> baja.
+# Saltar hace ruido: salta, espera, salta. Se puede subir y bajar por ambos lados.
+roca("P2_RocaBaja", "roca_baja", b + 640)
+roca("P2_RocaMedia", "roca_media", b + 725)
+roca("P2_RocaAlta", "roca_alta", b + 801)
+roca("P2_RocaMedia2", "roca_media", b + 877)
+roca("P2_RocaBaja2", "roca_baja", b + 962)
+objeto("Flor", "flor", b + 801, PISO - 138 - 36)
+arbusto("P2_Arbusto2", b + 1050)
+chaneque("P2_Chaneque2", b + 1090, 45)           # cuida la vela
+objeto("Vela", "vela", b + 1120, 510)
 
 # ---------- Pantalla 3: el claro de cempasúchil y el arroyo ----------
 c = P[2]

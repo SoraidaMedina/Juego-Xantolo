@@ -206,6 +206,7 @@ func _encuentro(jugador: CharacterBody2D) -> void:
 	estado = "reaccion"
 	_aviso_entrega.visible = false
 	_decir("¡Eso no era de mis hijos…!" if obj else "¿Dónde están mis hijos…?")
+	Juego.susto("llorona")
 	anim.speed_scale = 1.0
 	_mostrar_icono("!", Color.WHITE)
 	anim.flip_h = jugador.global_position.x < global_position.x

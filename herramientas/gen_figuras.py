@@ -58,7 +58,7 @@ class Mascara:
 
 def persona(alto=66, sombrero=False, rebozo=False, falda=False, baston=False, encorvado=0.0,
             trenzas=False, nino=False, mascara=None, listones=False, cuadro=0, brazos="abajo",
-            instrumento=None, canasta=False, morral=False, correr=False):
+            instrumento=None, canasta=False, morral=False, correr=False, sahumerio=False):
     """Construye la silueta. alto en celdas (66 ≈ 132 px). cuadro 0/1 = paso de baile."""
     M = Mascara()
     piso = H - 1
@@ -147,6 +147,16 @@ def persona(alto=66, sombrero=False, rebozo=False, falda=False, baston=False, en
         M.linea(hx - 3, cy - 1, hx - 15, cy - 10 - (r - 4.5), 2, M.cara)          # mástil
         ry = cy - 4 if cuadro == 0 else cy + 3                           # mano que rasguea
         M.linea(hx + 7, hombro + 1, hx + 4, ry, 3)
+    if sahumerio:  # sahumerio de barro colgando de la mano; se mece (cuadro 0/1)
+        mx, my = hx + 9, hombro + 10                                     # mano
+        M.linea(hx + 6, hombro + 1, mx, my, 3)                           # brazo al frente
+        vaiven = 4 if cuadro == 0 else -2
+        bx, by = mx + vaiven, my + 9
+        M.linea(mx, my, bx, by - 2, 1, M.det)                            # cadenita
+        M.trapecio(by - 2, by + 2, bx, 6, bx, 4, M.cara)                 # cazoleta de barro
+        M.linea(bx, by + 2, bx, by + 4, 2, M.cara)
+        M.elipse(bx, by - 3, 1.5, 1.0, M.luz)                            # brasa del copal
+        print("sahumerio cuadro", cuadro, "brasa en px", (bx * PX - W * PX / 2, (by - 3) * PX - H * PX / 2))
     if canasta:  # canasta de flores en la cabeza
         M.trapecio(hy - cabeza_r - 5, hy - cabeza_r - 1, hx, 13, hx, 9)
         for k in range(5):
@@ -232,6 +242,33 @@ if __name__ == "__main__":
     guardar("nina", [a_imagen(persona(40, nino=True, falda=True, trenzas=True), "silueta", 17)])
     guardar("nino_corriendo", [a_imagen(persona(40, nino=True, correr=True, cuadro=c, brazos="baile"), "silueta", 18) for c in (0, 1)])
     guardar("joven", [a_imagen(persona(64), "silueta", 19)])
+    guardar("sahumadora", [a_imagen(persona(60, rebozo=True, falda=True, sahumerio=True, cuadro=c), "silueta", 20) for c in (0, 1)])
+    # Cancha: aro de básquet y pelota
+    aro = Mascara()
+    for y in range(H):
+        for x in range(W):
+            pass
+    a_w, a_h = 30, 80
+    v = np.zeros((a_h, a_w)); al = np.zeros((a_h, a_w))
+    v[14:, 3:6] = 0.18; al[14:, 3:6] = 1                     # poste
+    v[2:16, 4:26] = 0.62; al[2:16, 4:26] = 1                 # tablero
+    v[2, 4:26] = v[15, 4:26] = 0.3; v[2:16, 4] = v[2:16, 25] = 0.3
+    v[8:14, 12:18] = 0.4                                      # cuadro del tablero
+    v[16, 14:28] = 0.25; al[16, 14:28] = 1                   # aro
+    for k in range(6):                                        # red
+        for x in (15 + k % 2, 19, 23 + k % 2, 27 - k // 2):
+            if x < a_w:
+                v[17 + k, x] = 0.7; al[17 + k, x] = 0.8
+    g = (v * 255).astype(np.uint8); A_ = (al * 255).astype(np.uint8)
+    Image.fromarray(np.dstack([g, g, g, A_]), "RGBA").resize((a_w * PX, a_h * PX), Image.NEAREST).save(os.path.join(OUT, "aro_basquet.png"))
+    pel = Image.new("RGBA", (6, 6))
+    pp = pel.load()
+    for y in range(6):
+        for x in range(6):
+            if (x - 2.5) ** 2 + (y - 2.5) ** 2 <= 7:
+                gv = 90 if (x == 2 or y == 3) else 150
+                pp[x, y] = (gv, gv, gv, 255)
+    pel.resize((12, 12), Image.NEAREST).save(os.path.join(OUT, "pelota.png"))
     # Piedrita para distraer chaneques
     p = Image.new("RGBA", (6, 5))
     px = p.load()

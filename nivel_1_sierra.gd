@@ -166,6 +166,7 @@ func _revisar_tips() -> void:
 			_decir("¡Te oye!  Agáchate ya  [S] … o escóndete en un arbusto", 2.5)
 		elif not _tip_persecucion and c.estado == "persigue":
 			_tip_persecucion = true
+			Juego.susto_ambiente("chaneque")
 			_decir("¡Te descubrieron! Escóndete en un arbusto o quema copal  [Q]", 3.0)
 	if not _tip_salto and _pantalla == 1 and _tutorial_listo and _jugador.nivel_ruido() >= 1.6:
 		_tip_salto = true

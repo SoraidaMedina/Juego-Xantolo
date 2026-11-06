@@ -95,6 +95,10 @@ func _crear_menu() -> void:
 	_agregar_boton(_principal, "Comenzar", Juego.nuevo_juego)
 	_agregar_boton(_principal, "Controles", _mostrar_controles)
 	_agregar_boton(_principal, "Créditos", _mostrar_creditos)
+	var b_sustos := Juego.crear_boton(_texto_sustos())
+	b_sustos.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	b_sustos.pressed.connect(_cambiar_sustos.bind(b_sustos))
+	_principal.add_child(b_sustos)
 	_agregar_boton(_principal, "Salir", get_tree().quit)
 	_crear_panel_info(columna)
 
@@ -131,6 +135,15 @@ func _crear_panel_info(columna: VBoxContainer) -> void:
 	volver.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	volver.pressed.connect(_mostrar_principal)
 	_panel_info.add_child(volver)
+
+
+func _cambiar_sustos(boton: Button) -> void:
+	Juego.sustos_activos = not Juego.sustos_activos
+	boton.text = _texto_sustos()
+
+
+func _texto_sustos() -> String:
+	return "Sustos: " + ("Sí" if Juego.sustos_activos else "No")
 
 
 func _agregar_boton(caja: Container, texto: String, accion: Callable) -> void:
@@ -175,6 +188,7 @@ func _crear_tabla_controles() -> GridContainer:
 		["E", "Tomar objetos · avanzar diálogo"],
 		["Q", "Quemar copal (dispersa chaneques)"],
 		["R", "Lanzar piedrita (distrae chaneques)"],
+		["C", "Amuleto bordado (el Nahual no te siente)"],
 		["F  (mantener)", "Ocultar la luz de la vela"],
 		["Esc", "Pausa"],
 	]

@@ -65,7 +65,7 @@ func _physics_process(delta: float) -> void:
 			if _t <= 0.0 and activo:
 				estado = "aviso"
 				_t = tiempo_aviso
-				_mostrar_icono("!", Color(1.0, 0.85, 0.4))
+				_mostrar_icono("!", Color(0.9, 0.9, 0.9))
 				Juego.sfx("latido", -2.0)
 				_play(["detect", "cry", "idle"])
 		"aviso":
@@ -113,7 +113,7 @@ func _programar_vigilancia() -> void:
 
 
 func _detecta(j: CharacterBody2D) -> bool:
-	if j == null or j.atrapada or j.esta_escondida():
+	if j == null or j.atrapada or j.esta_escondida() or j.protegida:
 		return false
 	var dx := absf(j.global_position.x - global_position.x)
 	var dy := absf(j.global_position.y - global_position.y)
@@ -124,6 +124,8 @@ func _detecta(j: CharacterBody2D) -> bool:
 
 ## Xochik "contiene su presencia" si está quieta y con la luz oculta
 func _delata_presencia(j: CharacterBody2D) -> bool:
+	if j.protegida:
+		return false   # amuleto bordado activo
 	var se_mueve := absf(j.velocity.x) > 5.0 or not j.is_on_floor()
 	var nivel = get_tree().get_first_node_in_group("nivel")
 	var luz_prendida: bool = nivel != null and nivel.has_method("luz_visible") and nivel.luz_visible()
@@ -149,9 +151,9 @@ func _revisar_contacto(j: CharacterBody2D) -> void:
 
 func _cazar(j: CharacterBody2D) -> void:
 	estado = "cazando"
-	Juego.sfx("descubierta")
+	Juego.susto("nahual")
 	vigilancia.emit(false)
-	_mostrar_icono("!!", Color(1.0, 0.3, 0.3))
+	_mostrar_icono("!!", Color.WHITE)
 	anim.flip_h = j.global_position.x < global_position.x
 	_play(["walk"])
 	anim.speed_scale = 2.5

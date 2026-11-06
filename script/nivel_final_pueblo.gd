@@ -35,6 +35,8 @@ extends Node2D
 @export var piso_y: float = 841.0
 ## X del arco por donde entran las ánimas y la cuadrilla
 @export var arco_x: float = 250.0
+## Puerta de la iglesia en el fondo (luz y gente rezando adentro)
+@export var puerta_iglesia: Vector2 = Vector2(884, 616)
 ## Al restaurarse el ritual, el color regresa al pueblo (amanecer cálido).
 ## Desactívalo si la entrega debe ser 100% en escala de grises.
 @export var color_al_amanecer: bool = true
@@ -57,6 +59,9 @@ var _murmullo: AudioStreamPlayer
 var _color: ShaderMaterial
 var _musicos: Array[Sprite2D] = []
 var _ninos: Array[Sprite2D] = []
+var _sahumadoras: Array[Sprite2D] = []
+var _pelota: Sprite2D
+var _aro_pos := Vector2.ZERO
 
 const SHADER_COLOR := """
 shader_type canvas_item;
@@ -83,6 +88,7 @@ func _ready() -> void:
 	_crear_ui()
 	_crear_color()
 	_crear_arco()
+	_iglesia_viva()
 
 	var meta = get_tree().get_first_node_in_group("meta")
 	if meta:
@@ -116,24 +122,21 @@ func _ritual(meta: Node2D) -> void:
 	var altar := _punto_altar(meta)
 	_alejar_camara(Vector2(682, 470), 0.82, 3.0)
 
-	# 1. La ofrenda: lo que Xochik recuperó + lo de la familia + el retrato
-	await _decir("Xochik coloca en el altar lo que recuperó en el camino…", 2.5)
+	# 1. Xochik camina al altar, se voltea y coloca con sus manos lo que recuperó
+	await _xochik_al_altar(altar)
 	var lista: Array[String] = []
 	if Juego.ofrenda.is_empty():
 		for r in ofrenda_por_defecto:
 			lista.append(r)
 	else:
 		lista.append_array(Juego.ofrenda)
-	for r in ofrenda_familia:
-		lista.append(r)
 	var n := lista.size()
 	for i in n:
-		var x := 0.0 if n == 1 else lerpf(-ancho_altar / 2.0, ancho_altar / 2.0, float(i) / (n - 1))
-		_poner_objeto(lista[i], altar + Vector2(x, 12.0), 1.0 + i * 0.06)
-		await get_tree().create_timer(0.6, false).timeout
-	await get_tree().create_timer(0.6, false).timeout
-	_poner_objeto(retrato, altar + Vector2(0, -34.0), 0.8, 1.4)
-	await _decir("…y por último, su retrato.", 2.5)
+		var x := 0.0 if n == 1 else lerpf(-ancho_altar / 2.0 + 30.0, ancho_altar / 2.0 - 30.0, float(i) / (n - 1))
+		await _colocar(lista[i], altar + Vector2(x, 12.0), 1.0 + i * 0.06)
+	await get_tree().create_timer(0.5, false).timeout
+	_decir("…y por último, el retrato del abuelo.", 3.0)
+	await _colocar(retrato, altar + Vector2(0, -34.0), 0.8, 1.4, 1.2)
 
 	# 2. El altar se enciende y suenan las campanas
 	var luz := _crear_luz(altar + Vector2(0, -20))
@@ -148,10 +151,10 @@ func _ritual(meta: Node2D) -> void:
 	var hombre := _figura("anima_hombre", Vector2(arco_x, piso_y))
 	for a in [abuelo, mujer, hombre]:
 		a.modulate.a = 0.0
-	var destino_abuelo := (_jugador.global_position.x - 85.0) if _jugador else altar.x - 120.0
+	var destino_abuelo := (_jugador.global_position.x - 85.0) if _jugador else altar.x - 200.0
 	_caminar_anima(abuelo, destino_abuelo, 0.0)
-	_caminar_anima(mujer, altar.x + 95.0, 1.6)
-	_caminar_anima(hombre, altar.x + 150.0, 3.2)
+	_caminar_anima(mujer, destino_abuelo - 57.0, 1.6)     # las ánimas se quedan juntas, del lado del arco
+	_caminar_anima(hombre, destino_abuelo - 112.0, 3.2)
 	await _decir("Las ánimas encuentran el camino de regreso a casa…", 4.0)
 	await get_tree().create_timer(3.5, false).timeout
 
@@ -173,7 +176,7 @@ func _ritual(meta: Node2D) -> void:
 	_iniciar_murmullo()
 	if _color:
 		create_tween().tween_property(_color, "shader_parameter/mezcla", 1.0, 8.0)
-	_aparecer_familia(altar)
+	_familia_llega(altar)
 	_llenar_pueblo()
 	await get_tree().create_timer(2.5, false).timeout
 	_llega_cuadrilla()
@@ -181,6 +184,74 @@ func _ritual(meta: Node2D) -> void:
 	await get_tree().create_timer(5.0, false).timeout
 
 	_mostrar_creditos()
+
+
+## Xochik camina hasta quedar frente al altar y se voltea hacia él
+func _xochik_al_altar(altar: Vector2) -> void:
+	if _jugador == null:
+		return
+	var anim: AnimatedSprite2D = _jugador.get_node("AnimatedSprite2D")
+	var destino := altar.x - 120.0
+	var dx := destino - _jugador.global_position.x
+	if absf(dx) > 4.0:
+		anim.flip_h = dx < 0.0
+		anim.play("walk")
+		var tw := create_tween()
+		tw.tween_property(_jugador, "global_position:x", destino, absf(dx) / 110.0)
+		await tw.finished
+	anim.flip_h = false          # mira hacia el altar
+	anim.play("idle")
+	await get_tree().create_timer(0.4, false).timeout
+
+
+## Xochik toma el objeto, se inclina y lo deja en su lugar (no aparece por arte de magia)
+func _colocar(ruta: String, destino: Vector2, tono: float, escala_extra: float = 1.0, pausa: float = 0.35) -> void:
+	if not ResourceLoader.exists(ruta):
+		return
+	var tex: Texture2D = load(ruta)
+	var desde := destino + Vector2(-90, -40)
+	if _jugador:
+		_jugador.mostrar_en_mano(tex)
+		var mano = _jugador.get("_mano")
+		if mano:
+			desde = mano.global_position
+	await get_tree().create_timer(pausa, false).timeout
+	var anim: AnimatedSprite2D = _jugador.get_node("AnimatedSprite2D") if _jugador else null
+	if anim:   # se inclina hacia la mesa
+		create_tween().tween_property(anim, "rotation", 0.12, 0.2)
+	if _jugador:
+		_jugador.ocultar_mano()
+	await _llevar_a_mesa(tex, desde, destino, escala_extra)
+	if anim:
+		create_tween().tween_property(anim, "rotation", 0.0, 0.25)
+	_vela_en(destino, tono)
+	await get_tree().create_timer(0.25, false).timeout
+
+
+## Mueve un objeto en un arco suave desde una mano hasta su lugar en la mesa
+func _llevar_a_mesa(tex: Texture2D, desde: Vector2, hasta: Vector2, escala_extra: float = 1.0) -> void:
+	var s := Sprite2D.new()
+	s.texture = tex
+	s.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	s.scale = Vector2.ONE * escala_objetos * escala_extra
+	s.global_position = desde
+	add_child(s)
+	var tw := create_tween().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tw.tween_method(_mover_en_arco.bind(s, desde, hasta, 28.0), 0.0, 1.0, 0.55)
+	await tw.finished
+
+
+## Posición en un arco (t de 0 a 1): sirve para lanzar objetos a la mesa y la pelota
+func _mover_en_arco(t: float, nodo: Node2D, desde: Vector2, hasta: Vector2, altura: float) -> void:
+	if is_instance_valid(nodo):
+		nodo.global_position = desde.lerp(hasta, t) + Vector2(0, -sin(t * PI) * altura)
+
+
+func _vela_en(pos: Vector2, tono: float) -> void:
+	var vela := _crear_luz(pos + Vector2(0, -6))
+	vela.texture_scale = 0.35
+	create_tween().tween_property(vela, "energy", 0.7, 0.6)
+	Juego.sfx("vela", -6.0, tono)
 
 
 ## Si existe un Marker2D llamado "Altar", los objetos se acomodan ahí (centro de la mesa)
@@ -301,18 +372,20 @@ func _pulso_de_luz(pos: Vector2) -> void:
 	tw.tween_property(l, "energy", 0.35, 1.5)
 
 
-func _aparecer_familia(altar: Vector2) -> void:
-	var lugares := [
-		["familia_papa", altar.x - 230.0], ["familia_mama", altar.x - 170.0], ["familia_nino", altar.x - 205.0],
-		["familia_tia", altar.x + 210.0],
+## Al amanecer la familia llega por la calle con lo que trae para la ofrenda,
+## lo deja en el altar y se queda del lado derecho (los vivos), frente a las ánimas.
+func _familia_llega(altar: Vector2) -> void:
+	var llegan := [
+		["familia_mama", altar.x + 110.0, 0, Vector2(-50, -6)],
+		["familia_nino", altar.x + 150.0, -1, Vector2.ZERO],
+		["familia_papa", altar.x + 195.0, 1, Vector2(0, -6)],
+		["familia_tia", altar.x + 245.0, 2, Vector2(50, -6)],
 	]
-	for i in lugares.size():
-		var f := _figura(lugares[i][0], Vector2(lugares[i][1], piso_y))
-		f.modulate.a = 0.0
-		f.flip_h = lugares[i][1] > altar.x
-		var tw := create_tween()
-		tw.tween_interval(i * 0.6)
-		tw.tween_property(f, "modulate:a", 1.0, 1.5)
+	for i in llegan.size():
+		var datos: Array = llegan[i]
+		var f := _figura(datos[0], Vector2(1430.0 + i * 40.0, piso_y))
+		f.flip_h = true
+		_familiar_camina(f, altar, datos[1], datos[2], datos[3], i * 1.4)
 	# La abuela que guió a Xochik también está
 	if ResourceLoader.exists("res://assets/abuela/abuela_idle.png"):
 		var ab := Sprite2D.new()
@@ -320,12 +393,37 @@ func _aparecer_familia(altar: Vector2) -> void:
 		ab.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		ab.scale = Vector2.ONE * 0.12
 		ab.flip_h = true
-		ab.position = Vector2(altar.x + 265.0, piso_y - (1183.0 - ab.texture.get_height() / 2.0) * 0.12)
+		ab.position = Vector2(altar.x + 300.0, piso_y - (1183.0 - ab.texture.get_height() / 2.0) * 0.12)
 		ab.modulate.a = 0.0
 		add_child(ab)
 		var tw2 := create_tween()
-		tw2.tween_interval(2.4)
+		tw2.tween_interval(6.0)
 		tw2.tween_property(ab, "modulate:a", 1.0, 1.5)
+
+
+func _familiar_camina(f: Sprite2D, altar: Vector2, lugar_x: float, i_objeto: int, hueco: Vector2, retraso: float) -> void:
+	await get_tree().create_timer(retraso, false).timeout
+	var y0: float = f.get_meta("y0")
+	var paso := create_tween().set_loops()
+	paso.tween_property(f, "position:y", y0 - 3.0, 0.22)
+	paso.tween_property(f, "position:y", y0, 0.22)
+	if i_objeto >= 0 and i_objeto < ofrenda_familia.size():
+		# Camina hasta la mesa con lo que trae, lo deja y se retira a su lugar
+		var tw := create_tween()
+		tw.tween_property(f, "position:x", altar.x + 70.0 + hueco.x * 0.3, absf(f.position.x - altar.x) / 80.0)
+		await tw.finished
+		paso.pause()
+		f.position.y = y0
+		var tex: Texture2D = load(ofrenda_familia[i_objeto])
+		await _llevar_a_mesa(tex, f.position + Vector2(-20, -20), altar + hueco)
+		_vela_en(altar + hueco, 1.1)
+		await get_tree().create_timer(0.4, false).timeout
+		paso.play()
+	var tw2 := create_tween()
+	tw2.tween_property(f, "position:x", lugar_x, absf(f.position.x - lugar_x) / 80.0 + 0.1)
+	await tw2.finished
+	paso.kill()
+	f.position.y = y0
 
 
 func _llega_cuadrilla() -> void:
@@ -338,7 +436,7 @@ func _llega_cuadrilla() -> void:
 		var tw := create_tween()
 		tw.tween_interval(i * 0.9)
 		tw.tween_property(d, "modulate:a", 1.0, 0.5)
-		tw.parallel().tween_property(d, "position:x", arco_x + 110.0 + i * 70.0, 3.0)
+		tw.parallel().tween_property(d, "position:x", arco_x + 190.0 + i * 62.0, 3.0)
 
 
 ## Zapateado: alterna los 2 cuadros con el ritmo del huapango y rebota
@@ -415,46 +513,117 @@ func _crear_color() -> void:
 	capa.add_child(r)
 
 
-## Llega la gente del pueblo: trío huasteco junto al arco, vecinos, niños corriendo
+## Llega la gente del pueblo: sahumadoras en el arco, trío junto a la iglesia,
+## niños jugando en la cancha, vecinos que llegan por la calle
 func _llenar_pueblo() -> void:
-	# Trío huasteco recibiendo a las ánimas junto al arco
-	var trio := [["musico_huapanguera", 40.0, 0.2], ["musico_violin", 100.0, 0.39], ["musico_jarana", 160.0, 0.2]]
+	# Dos señoras sahumando el arco con copal
+	for datos in [[arco_x - 112.0, false], [arco_x + 112.0, true]]:
+		var sa := _figura("sahumadora", Vector2(datos[0], piso_y), 2)
+		sa.flip_h = datos[1]
+		sa.modulate.a = 0.0
+		sa.set_meta("humo", _crear_humo(sa))
+		_sahumadoras.append(sa)
+		create_tween().tween_property(sa, "modulate:a", 1.0, 1.5)
+	# Trío huasteco tocando frente a la iglesia
+	var trio := [["musico_huapanguera", 560.0, 0.2], ["musico_violin", 615.0, 0.39], ["musico_jarana", 670.0, 0.2]]
 	for i in trio.size():
-		var m := _figura(trio[i][0], Vector2(trio[i][1], piso_y), 2)
+		var m := _vecino(trio[i][0], trio[i][1], 2)
 		m.set_meta("paso", trio[i][2])
-		m.modulate.a = 0.0
 		_musicos.append(m)
 		var tw := create_tween()
 		tw.tween_interval(0.3 + i * 0.4)
-		tw.tween_property(m, "modulate:a", 1.0, 1.2)
-	# Vecinos al fondo de la plaza (más chicos y tenues: están más lejos)
-	var fondo := [["senora_canasta", 470.0], ["senor_morral", 530.0], ["abuelita", 690.0],
-		["joven", 1130.0], ["nina", 1165.0], ["senora_canasta", 1320.0]]
-	for i in fondo.size():
-		var v := _vecino(fondo[i][0], fondo[i][1])
-		var tw := create_tween()
-		tw.tween_interval(1.0 + i * 0.5)
-		tw.tween_property(v, "modulate:a", 0.85, 1.5)
-	# Gente que va llegando desde la calle de la derecha
-	var llegan := [["senor_morral", 820.0], ["senora_canasta", 880.0], ["joven", 1260.0]]
+		tw.tween_property(m, "modulate:a", 0.9, 1.2)
+	# La cancha: un aro y niños pasándose la pelota
+	var aro := _vecino("aro_basquet", 40.0)
+	aro.flip_h = false
+	create_tween().tween_property(aro, "modulate:a", 0.9, 1.0)
+	_aro_pos = aro.position + Vector2(10.0, -aro.texture.get_height() * 0.86 / 2.0 + 28.0)
+	for i in 2:
+		var nino := _vecino("nino_corriendo" if i == 0 else "nina", 150.0 + i * 120.0, 2 if i == 0 else 1)
+		nino.set_meta("vel", 70.0 if i == 0 else -55.0)
+		_ninos.append(nino)
+		create_tween().tween_property(nino, "modulate:a", 0.9, 1.0)
+	_pelota = Sprite2D.new()
+	_pelota.texture = load(FIG + "pelota.png")
+	_pelota.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_pelota.z_index = -1
+	_pelota.position = _ninos[0].position + Vector2(0, -20)
+	add_child(_pelota)
+	_jugar_pelota()
+	# Vecinos al fondo de la plaza y gente que va llegando por la calle
+	for datos in [["senora_canasta", 470.0], ["senor_morral", 755.0], ["joven", 1250.0]]:
+		var v := _vecino(datos[0], datos[1])
+		create_tween().tween_property(v, "modulate:a", 0.85, 1.5)
+	var llegan := [["senor_morral", 1300.0], ["senora_canasta", 1340.0], ["abuelita", 720.0]]
 	for i in llegan.size():
-		var v := _vecino(llegan[i][0], 1420.0)
+		var v := _vecino(llegan[i][0], 1430.0)
 		v.flip_h = true
 		v.modulate.a = 0.85
 		var tw := create_tween()
-		tw.tween_interval(2.0 + i * 1.6)
-		tw.tween_property(v, "position:x", llegan[i][1], absf(1420.0 - llegan[i][1]) / 70.0)
-	# Niños corriendo y jugando por la plaza
-	for i in 2:
-		var n := _figura("nino_corriendo", Vector2(520.0 + i * 260.0, piso_y), 2)
-		n.set_meta("vel", 120.0 if i == 0 else -105.0)
-		n.modulate.a = 0.0
-		_ninos.append(n)
-		create_tween().tween_property(n, "modulate:a", 1.0, 1.0)
+		tw.tween_interval(3.0 + i * 1.8)
+		tw.tween_property(v, "position:x", llegan[i][1], absf(1430.0 - llegan[i][1]) / 70.0)
 
 
-func _vecino(nombre: String, x: float) -> Sprite2D:
-	var v := _figura(nombre, Vector2(x, piso_y - 16.0))
+## La iglesia está abierta toda la noche: luz en la puerta y gente rezando adentro
+func _iglesia_viva() -> void:
+	var puerta := _crear_luz(puerta_iglesia + Vector2(0, -20))
+	puerta.texture_scale = 0.45
+	puerta.energy = 0.8
+	for y in [425.0, 480.0]:   # ventanas del campanario
+		var v := _crear_luz(Vector2(puerta_iglesia.x - 4.0, y))
+		v.texture_scale = 0.18
+		v.energy = 0.5
+	var adentro := ["abuelita", "familia_mama", "senor_morral", "nina"]
+	for i in adentro.size():
+		var g := Sprite2D.new()
+		g.texture = load(FIG + adentro[i] + ".png")
+		g.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		g.scale = Vector2.ONE * 0.3
+		g.flip_h = i % 2 == 0
+		g.z_index = -5
+		g.modulate = Color(0.12, 0.12, 0.12, 0.95)
+		g.position = Vector2(puerta_iglesia.x - 11.0 + i * 7.5, puerta_iglesia.y + 36.0 - g.texture.get_height() * 0.15)
+		add_child(g)
+
+
+func _crear_humo(sa: Sprite2D) -> CPUParticles2D:
+	var h := CPUParticles2D.new()
+	h.amount = 24
+	h.lifetime = 2.6
+	h.direction = Vector2.UP
+	h.spread = 20.0
+	h.initial_velocity_min = 18.0
+	h.initial_velocity_max = 34.0
+	h.gravity = Vector2(6, -4)
+	h.scale_amount_min = 3.0
+	h.scale_amount_max = 8.0
+	var g := Gradient.new()
+	g.set_color(0, Color(0.95, 0.95, 0.95, 0.55))
+	g.set_color(1, Color(0.8, 0.8, 0.8, 0.0))
+	h.color_ramp = g
+	sa.add_child(h)
+	return h
+
+
+## Los niños se pasan la pelota y de vez en cuando tiran al aro
+func _jugar_pelota() -> void:
+	var turno := 0
+	while is_inside_tree():
+		await get_tree().create_timer(1.1, false).timeout
+		var desde := _pelota.position
+		var hasta: Vector2
+		if turno % 4 == 3:
+			hasta = _aro_pos
+		else:
+			hasta = _ninos[turno % 2].position + Vector2(0, -24)
+		turno += 1
+		var tw := create_tween()
+		tw.tween_method(_mover_en_arco.bind(_pelota, desde, hasta, 60.0), 0.0, 1.0, 0.7)
+		await tw.finished
+
+
+func _vecino(nombre: String, x: float, cuadros: int = 1) -> Sprite2D:
+	var v := _figura(nombre, Vector2(x, piso_y - 16.0), cuadros)
 	v.scale = Vector2.ONE * 0.86
 	v.position.y += v.texture.get_height() * 0.07
 	v.set_meta("y0", v.position.y)
@@ -469,12 +638,19 @@ func _animar_pueblo(delta: float) -> void:
 	for n in _ninos:
 		var vel: float = n.get_meta("vel")
 		n.position.x += vel * delta
-		if n.position.x > 920.0 or n.position.x < 420.0:
+		if n.position.x > 330.0 or n.position.x < 110.0:
 			vel = -vel
 			n.set_meta("vel", vel)
 		n.flip_h = vel < 0.0
-		n.frame = int(_t / 0.16) % 2
-		n.position.y = n.get_meta("y0") - absf(sin(_t * 10.0)) * 4.0
+		if n.hframes > 1:
+			n.frame = int(_t / 0.18) % 2
+		n.position.y = n.get_meta("y0") - absf(sin(_t * 8.0)) * 3.0
+	for sa in _sahumadoras:
+		# El sahumerio se mece; el humo sale de la brasa
+		sa.frame = int(_t / 0.6) % 2
+		var bx := 26.0 if sa.frame == 0 else 14.0
+		var humo: CPUParticles2D = sa.get_meta("humo")
+		humo.position = Vector2(-bx if sa.flip_h else bx, 18.0)
 
 
 func _iniciar_murmullo() -> void:
