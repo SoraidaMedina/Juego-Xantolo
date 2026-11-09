@@ -3,7 +3,9 @@ extends Node2D
 ## Por dentro de la montaña, casi a oscuras. Tres objetos con memoria —el balero, la foto y la vela
 ## del abuelo— abren recuerdos sin texto que revelan por qué se rompió el ritual.
 ## Las corrientes de aire apagan la llama de Chicomexochitl: cuando silba el viento, agáchate [S].
-## Con los tres recuerdos, la salida se ilumina con el amanecer y lleva al pueblo.
+## De las grietas salen chamucos: espera a que se escondan y pasa. Al tomar la foto del abuelo
+## despierta el chamuco grande y te persigue hasta la vela. Con los tres recuerdos, la salida se
+## ilumina con el amanecer y lleva al pueblo.
 
 @export_file("*.tscn") var siguiente_nivel: String = ""
 @export var ancho_pantalla: int = 1152
@@ -20,6 +22,7 @@ extends Node2D
 @export var mensajes_intro: PackedStringArray = [
 	"Por dentro de la montaña… aquí el viento corre entre las piedras.",
 	"Cuando silbe, agáchate  [S]  y cúbreme con tu cuerpo. Si el viento me apaga, no verás dónde pisas.",
+	"Y cuidado con las grietas… en esta cueva viven chamucos.",
 	"Siento a tu abuelo aquí dentro, Xochik. Hay cosas que guardan su memoria.",
 ]
 ## Lo que dice Chicomexochitl después de cada recuerdo
@@ -62,6 +65,7 @@ var _completado := false
 var _saliendo := false
 var _apagada := 0.0
 var _tip_viento := false
+var _tip_grieta := false
 var _tip_apagada := false
 var _aviso_falta := 0.0
 var _t := 0.0
@@ -94,8 +98,12 @@ func _intro() -> void:
 	_jugando = true
 
 
-## Las corrientes de aire solo soplan mientras se juega (no durante diálogos ni recuerdos)
+## Viento y chamucos solo atacan mientras se juega (no durante diálogos ni recuerdos)
 func corrientes_activas() -> bool:
+	return _jugando
+
+
+func amenazas_activas() -> bool:
 	return _jugando
 
 
@@ -104,6 +112,7 @@ func _process(delta: float) -> void:
 	_revisar_pantalla(false)
 	_revisar_luz(delta)
 	_revisar_viento()
+	_revisar_grietas()
 	_revisar_salida(delta)
 
 
@@ -192,6 +201,17 @@ func _revisar_viento() -> void:
 			return
 
 
+## La primera vez que una grieta brilla cerca, Chicomexochitl explica cómo pasar
+func _revisar_grietas() -> void:
+	if _tip_grieta or not _jugando:
+		return
+	for g in get_tree().get_nodes_in_group("grietas"):
+		if g.estado == "aviso" and misma_pantalla((g as Node2D).global_position):
+			_tip_grieta = true
+			_decir("¡Esa grieta brilla!  Espera a que el chamuco se esconda… y pasa rápido.", 3.2)
+			return
+
+
 # ---------- Recuerdos ----------
 
 func _al_recoger(obj: ObjetoOfrenda) -> void:
@@ -212,6 +232,10 @@ func _al_recoger(obj: ObjetoOfrenda) -> void:
 
 
 func _recordar(id: String) -> void:
+	# La luz de la vela del abuelo deshace al chamuco que te persigue
+	if id == "vela":
+		for c in get_tree().get_nodes_in_group("perseguidor"):
+			c.desvanecer()
 	_jugando = false
 	_apagada = 0.0
 	_hud.estado("luz_apagada", false)
@@ -237,6 +261,11 @@ func _recordar(id: String) -> void:
 	if _jugador:
 		_jugador.atrapada = false
 	_jugando = true
+	# Después de la foto despierta el chamuco grande: hay que correr hasta la vela
+	if id == "foto":
+		for c in get_tree().get_nodes_in_group("perseguidor"):
+			c.despertar()
+		_decir("¡Algo despertó en la oscuridad…!  ¡Corre hacia la vela  →!", 3.0)
 
 
 func _abrir_salida() -> void:

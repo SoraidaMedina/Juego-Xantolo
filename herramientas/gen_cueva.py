@@ -90,9 +90,9 @@ def fondo_cueva():
     img = Image.fromarray((v * 255).astype(np.uint8), "L")
     d = ImageDraw.Draw(img)
 
-    # Pinturas rupestres de los antepasados en la pared
-    for x0 in (90, 360, 620, 840, 1010):
-        petroglifos(d, x0, 150 + int(rng.integers(-15, 15)))
+    # Pantalla 1: un par de grabados sueltos. Pantalla 2: el gran mural de los antepasados.
+    petroglifos(d, 360, 150)
+    mural(d, 576 + 90, 118)
 
     # Estalagmitas: lejanas (claras, con niebla) y cercanas (oscuras, grandes)
     for x in range(6, W, 17):
@@ -104,7 +104,7 @@ def fondo_cueva():
             formacion(d, x + int(rng.integers(-10, 10)), PISO + 1, int(rng.integers(40, 96)),
                       int(rng.integers(9, 18)), int(rng.integers(20, 34)))
     # Columnas donde se unen techo y piso
-    for cx in (330, 760, 576 + 200, 576 + 520):
+    for cx in (330, 576 + 336):
         ancho = int(rng.integers(14, 22))
         for y in range(0, PISO):
             t = abs(y - PISO * 0.45) / (PISO * 0.55)
@@ -133,6 +133,8 @@ def fondo_cueva():
         formacion(d, x, y - 2, largo, int(rng.integers(3, 8)), int(rng.integers(12, 26)), hacia_abajo=True)
         if rng.random() < 0.35:   # gota colgando
             d.point((x, y + largo + 2), fill=150)
+    raices(d, techo, 10, 520)
+    repisa(d, 576 + 380, 196)
     v = np.asarray(img, np.float32) / 255.0
 
     # Rayos de luz por las grietas del techo
@@ -171,7 +173,10 @@ def fondo_cueva():
 
     # Entrada (luz de luna) a la izquierda
     xx = np.arange(W)[None, :]
-    v += 0.25 * np.exp(-xx / 45.0) * (np.arange(H)[:, None] < PISO)
+    v += 0.32 * np.exp(-xx / 60.0) * (np.arange(H)[:, None] < PISO)
+    img = Image.fromarray((np.clip(v, 0, 1) * 255).astype(np.uint8), "L")
+    helechos(ImageDraw.Draw(img), 0, 70)
+    v = np.asarray(img, np.float32) / 255.0
 
     # Salida al amanecer, a la derecha: boca irregular de la cueva
     salida = Image.new("L", (W, H), 0)
@@ -221,6 +226,104 @@ def fondo_cueva():
     niveles = [0.0, 0.04, 0.08, 0.12, 0.17, 0.23, 0.30, 0.38, 0.48, 0.62, 0.78, 0.92]
     v = tramar(np.clip(v, 0, 1), niveles)
     return Image.fromarray((v * 255).astype(np.uint8), "L")
+
+
+def raices(d, techo, x0, x1):
+    """Raíces que cuelgan del techo cerca de la entrada (la cueva está bajo el monte)."""
+    for x in range(x0, x1, 9):
+        if rng.random() < 0.55:
+            y = int(techo[x]) + 1
+            largo = int(rng.integers(18, 75)) * (1.4 if x < 140 else 1.0)
+            px, py = x, y
+            for k in range(int(largo / 3)):
+                nx = px + rng.uniform(-1.2, 1.2) + math.sin(k * 0.4) * 0.6
+                ny = py + 3
+                d.line([(px, py), (nx, ny)], fill=int(rng.integers(14, 26)))
+                if rng.random() < 0.12:   # raicita
+                    d.line([(nx, ny), (nx + rng.uniform(-6, 6), ny + rng.uniform(3, 8))], fill=20)
+                px, py = nx, ny
+
+
+def helechos(d, x0, x1):
+    """Helechos y hierbas a contraluz en la boca de la cueva."""
+    for k in range(9):
+        bx = x0 + k * (x1 - x0) / 9 + rng.uniform(-3, 3)
+        for h in range(5):
+            ang = math.pi * (0.55 + 0.1 * (h - 2)) + rng.uniform(-0.1, 0.1)
+            largo = rng.uniform(16, 34)
+            d.line([(bx, PISO), (bx + math.cos(ang) * largo, PISO - math.sin(ang) * largo)], fill=8)
+    for k in range(6):   # enredaderas que cuelgan de la entrada
+        x = rng.uniform(2, 60)
+        d.line([(x, 20), (x + rng.uniform(-4, 4), 20 + rng.uniform(40, 110))], fill=12)
+
+
+def mural(d, x0, y0):
+    """Gran pared pintada por los antepasados: procesión, nahui ollin, sol y venados."""
+    tono = 118
+    # nahui ollin grande
+    cx, cy = x0 + 40, y0 + 24
+    for dx, dy in ((1, 1), (-1, 1), (1, -1), (-1, -1)):
+        d.line([(cx, cy), (cx + dx * 20, cy + dy * 20)], fill=tono, width=2)
+        d.ellipse([cx + dx * 20 - 5, cy + dy * 20 - 5, cx + dx * 20 + 5, cy + dy * 20 + 5], outline=tono)
+    d.ellipse([cx - 7, cy - 7, cx + 7, cy + 7], outline=tono)
+    d.ellipse([cx - 2, cy - 2, cx + 2, cy + 2], fill=tono)
+    # sol
+    sx, sy = x0 + 200, y0 + 4
+    d.ellipse([sx - 9, sy - 9, sx + 9, sy + 9], outline=tono)
+    for k in range(12):
+        a = k * math.pi / 6
+        d.line([(sx + math.cos(a) * 12, sy + math.sin(a) * 12), (sx + math.cos(a) * 17, sy + math.sin(a) * 17)], fill=tono)
+    # procesión de personas tomadas de la mano hacia una casa (el camino de las ánimas)
+    for k in range(11):
+        px = x0 + 80 + k * 12
+        py = y0 + 46 + int(2 * math.sin(k))
+        d.ellipse([px - 2, py - 13, px + 2, py - 9], outline=tono)
+        d.line([(px, py - 9), (px, py)], fill=tono)
+        d.line([(px - 6, py - 6), (px + 6, py - 6)], fill=tono)
+        d.line([(px, py), (px - 3, py + 7)], fill=tono)
+        d.line([(px, py), (px + 3, py + 7)], fill=tono)
+    hx, hy = x0 + 225, y0 + 40
+    d.polygon([(hx - 10, hy), (hx + 10, hy), (hx, hy - 10)], outline=tono)
+    d.rectangle([hx - 8, hy, hx + 8, hy + 14], outline=tono)
+    # camino punteado (pétalos) de la procesión a la casa
+    for k in range(12):
+        d.point((x0 + 70 + k * 13, y0 + 60), fill=tono + 30)
+    # venados y manos
+    for vx in (x0 + 20, x0 + 150):
+        vy = y0 + 84
+        d.line([(vx, vy), (vx + 16, vy)], fill=tono)
+        for lx in (vx + 1, vx + 15):
+            d.line([(lx, vy), (lx, vy + 8)], fill=tono)
+        d.line([(vx + 16, vy), (vx + 20, vy - 7)], fill=tono)
+        d.line([(vx + 20, vy - 7), (vx + 17, vy - 13)], fill=tono)
+        d.line([(vx + 20, vy - 7), (vx + 25, vy - 13)], fill=tono)
+    for mx in (x0 + 100, x0 + 118, x0 + 250):
+        my = y0 + 80
+        d.ellipse([mx - 4, my - 2, mx + 4, my + 7], fill=tono - 30)
+        for f in range(4):
+            d.line([(mx - 3 + f * 2, my - 1), (mx - 4 + f * 2.6, my - 7)], fill=tono - 30)
+
+
+def repisa(d, x0, y0):
+    """Repisa de roca con cántaros, velas viejas y calaveras: ofrendas que alguien dejó hace mucho."""
+    d.polygon([(x0 - 8, y0), (x0 + 120, y0 - 3), (x0 + 128, y0 + 6), (x0 + 100, y0 + 14), (x0, y0 + 12)], fill=20)
+    d.line([(x0 - 8, y0), (x0 + 120, y0 - 3)], fill=62)
+    for k, tipo in enumerate(("cantaro", "calavera", "vela", "cantaro", "calavera", "calavera", "vela")):
+        x = x0 + 6 + k * 16
+        y = y0 - 1
+        if tipo == "cantaro":
+            d.ellipse([x - 6, y - 14, x + 6, y], fill=34)
+            d.rectangle([x - 3, y - 18, x + 3, y - 12], fill=34)
+            d.arc([x - 6, y - 14, x + 6, y], 160, 250, fill=70)
+        elif tipo == "calavera":
+            d.ellipse([x - 5, y - 11, x + 5, y - 2], fill=120)
+            d.rectangle([x - 3, y - 3, x + 3, y], fill=120)
+            d.point((x - 2, y - 6), fill=10)
+            d.point((x + 2, y - 6), fill=10)
+            d.point((x, y - 3), fill=40)
+        else:
+            d.rectangle([x - 1, y - 12, x + 1, y], fill=90)
+            d.line([(x, y - 13), (x, y - 15)], fill=40)
 
 
 def petroglifos(d, x0, y0):

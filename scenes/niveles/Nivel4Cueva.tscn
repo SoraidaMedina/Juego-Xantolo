@@ -8,13 +8,16 @@
 [ext_resource type="PackedScene" path="res://scenes/objeto_ofrenda.tscn" id="6_r"]
 [ext_resource type="Script" path="res://script/trampa_espiritual.gd" id="7_r"]
 [ext_resource type="Script" path="res://script/corriente_aire.gd" id="8_r"]
-[ext_resource type="Texture2D" path="res://assets/cueva/balero.png" id="9_r"]
-[ext_resource type="Texture2D" path="res://assets/objetos/retrato_familia.png" id="10_r"]
-[ext_resource type="Texture2D" path="res://assets/objetos/vela1.png" id="11_r"]
-[ext_resource type="Texture2D" path="res://assets/objetos/papel_picado.png" id="12_r"]
-[ext_resource type="Texture2D" path="res://assets/sierra/roca_baja.png" id="13_r"]
-[ext_resource type="Texture2D" path="res://assets/sierra/roca_media.png" id="14_r"]
-[ext_resource type="Texture2D" path="res://assets/sierra/roca_alta.png" id="15_r"]
+[ext_resource type="Script" path="res://script/chamuco_grieta.gd" id="9_r"]
+[ext_resource type="Script" path="res://script/chamuco_perseguidor.gd" id="10_r"]
+[ext_resource type="Script" path="res://script/anima_errante.gd" id="11_r"]
+[ext_resource type="Texture2D" path="res://assets/cueva/balero.png" id="12_r"]
+[ext_resource type="Texture2D" path="res://assets/objetos/retrato_familia.png" id="13_r"]
+[ext_resource type="Texture2D" path="res://assets/objetos/vela1.png" id="14_r"]
+[ext_resource type="Texture2D" path="res://assets/objetos/papel_picado.png" id="15_r"]
+[ext_resource type="Texture2D" path="res://assets/sierra/roca_baja.png" id="16_r"]
+[ext_resource type="Texture2D" path="res://assets/sierra/roca_media.png" id="17_r"]
+[ext_resource type="Texture2D" path="res://assets/sierra/roca_alta.png" id="18_r"]
 
 [sub_resource type="RectangleShape2D" id="Rect_1"]
 size = Vector2(560, 40)
@@ -101,7 +104,7 @@ position = Vector2(250, 560)
 modulate = Color(0.8, 0.8, 0.82, 1)
 texture_filter = 1
 position = Vector2(0, -25.0)
-texture = ExtResource("13_r")
+texture = ExtResource("16_r")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="P1_RocaBaja"]
 position = Vector2(0, -23.0)
@@ -114,7 +117,7 @@ position = Vector2(335, 560)
 modulate = Color(0.8, 0.8, 0.82, 1)
 texture_filter = 1
 position = Vector2(0, -48.0)
-texture = ExtResource("14_r")
+texture = ExtResource("17_r")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="P1_RocaMedia"]
 position = Vector2(0, -46.0)
@@ -123,14 +126,22 @@ shape = SubResource("Rect_6")
 [node name="PapelPicado" parent="." instance=ExtResource("6_r")]
 position = Vector2(335, 434)
 tipo = "papel_picado"
-textura = ExtResource("12_r")
+textura = ExtResource("15_r")
 escala = 0.13
 reaparece = false
 
+[node name="Grieta1" type="Node2D" parent="."]
+position = Vector2(455, 560)
+script = ExtResource("9_r")
+calma_min = 2.2
+calma_max = 3.4
+afuera = 1.1
+desfase = 1.5
+
 [node name="Viento1" type="Area2D" parent="."]
-position = Vector2(520, 430)
+position = Vector2(640, 430)
 script = ExtResource("8_r")
-tamano = Vector2(440, 260)
+tamano = Vector2(260, 260)
 desfase = 0.0
 
 [node name="P1_PirBaja" type="StaticBody2D" parent="."]
@@ -140,7 +151,7 @@ position = Vector2(760, 560)
 modulate = Color(0.8, 0.8, 0.82, 1)
 texture_filter = 1
 position = Vector2(0, -25.0)
-texture = ExtResource("13_r")
+texture = ExtResource("16_r")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="P1_PirBaja"]
 position = Vector2(0, -23.0)
@@ -153,7 +164,7 @@ position = Vector2(845, 560)
 modulate = Color(0.8, 0.8, 0.82, 1)
 texture_filter = 1
 position = Vector2(0, -48.0)
-texture = ExtResource("14_r")
+texture = ExtResource("17_r")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="P1_PirMedia"]
 position = Vector2(0, -46.0)
@@ -166,7 +177,7 @@ position = Vector2(921, 560)
 modulate = Color(0.8, 0.8, 0.82, 1)
 texture_filter = 1
 position = Vector2(0, -71.0)
-texture = ExtResource("15_r")
+texture = ExtResource("18_r")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="P1_PirAlta"]
 position = Vector2(0, -69.0)
@@ -179,7 +190,7 @@ position = Vector2(997, 560)
 modulate = Color(0.8, 0.8, 0.82, 1)
 texture_filter = 1
 position = Vector2(0, -48.0)
-texture = ExtResource("14_r")
+texture = ExtResource("17_r")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="P1_PirMedia2"]
 position = Vector2(0, -46.0)
@@ -192,7 +203,7 @@ position = Vector2(1082, 560)
 modulate = Color(0.8, 0.8, 0.82, 1)
 texture_filter = 1
 position = Vector2(0, -25.0)
-texture = ExtResource("13_r")
+texture = ExtResource("16_r")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="P1_PirBaja2"]
 position = Vector2(0, -23.0)
@@ -201,39 +212,81 @@ shape = SubResource("Rect_11")
 [node name="RecuerdoBalero" parent="." instance=ExtResource("6_r")]
 position = Vector2(921, 384)
 tipo = "recuerdo"
-textura = ExtResource("9_r")
+textura = ExtResource("12_r")
 escala = 0.18
 recoger_automatico = true
 reaparece = false
 id_recuerdo = "balero"
 nombre_aviso = "El balero del abuelo"
 
-[node name="TrampaEspiritual" type="Area2D" parent="."]
-position = Vector2(1452, 560)
-script = ExtResource("7_r")
+[node name="Anima1" type="Node2D" parent="."]
+position = Vector2(560, 250)
+script = ExtResource("11_r")
+recorrido = 300
+
+[node name="Anima2" type="Node2D" parent="."]
+position = Vector2(980, 200)
+script = ExtResource("11_r")
+recorrido = 200
+
+[node name="ChamucoPerseguidor" type="Node2D" parent="."]
+position = Vector2(1002, 560)
+script = ExtResource("10_r")
 
 [node name="RecuerdoFoto" parent="." instance=ExtResource("6_r")]
-position = Vector2(1622, 514)
+position = Vector2(1282, 514)
 tipo = "recuerdo"
-textura = ExtResource("10_r")
+textura = ExtResource("13_r")
 escala = 0.13
 recoger_automatico = true
 reaparece = false
 id_recuerdo = "foto"
 nombre_aviso = "La foto del abuelo"
 
-[node name="Viento2" type="Area2D" parent="."]
-position = Vector2(1892, 430)
-script = ExtResource("8_r")
-tamano = Vector2(460, 260)
-desfase = 2.0
+[node name="TrampaEspiritual" type="Area2D" parent="."]
+position = Vector2(1452, 560)
+script = ExtResource("7_r")
+
+[node name="Grieta2" type="Node2D" parent="."]
+position = Vector2(1622, 560)
+script = ExtResource("9_r")
+calma_min = 1.2
+calma_max = 1.8
+afuera = 0.9
+desfase = 0.0
+
+[node name="Grieta3" type="Node2D" parent="."]
+position = Vector2(1762, 560)
+script = ExtResource("9_r")
+calma_min = 1.2
+calma_max = 1.8
+afuera = 0.9
+desfase = 1.2
+
+[node name="Grieta4" type="Node2D" parent="."]
+position = Vector2(2052, 560)
+script = ExtResource("9_r")
+calma_min = 1.4
+calma_max = 2.0
+afuera = 0.9
+desfase = 0.6
 
 [node name="RecuerdoVela" parent="." instance=ExtResource("6_r")]
 position = Vector2(2162, 510)
 tipo = "recuerdo"
-textura = ExtResource("11_r")
+textura = ExtResource("14_r")
 escala = 0.17
 recoger_automatico = true
 reaparece = false
 id_recuerdo = "vela"
 nombre_aviso = "La vela del abuelo"
+
+[node name="Anima3" type="Node2D" parent="."]
+position = Vector2(1532, 230)
+script = ExtResource("11_r")
+recorrido = 260
+
+[node name="Anima4" type="Node2D" parent="."]
+position = Vector2(1972, 170)
+script = ExtResource("11_r")
+recorrido = 320

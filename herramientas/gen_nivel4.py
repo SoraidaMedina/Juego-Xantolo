@@ -39,6 +39,9 @@ R_CHICO = recurso("PackedScene", "res://scenes/personajes/Chicomexochitl.tscn", 
 R_OBJ = recurso("PackedScene", "res://scenes/objeto_ofrenda.tscn")
 R_TRAMPA = recurso("Script", "res://script/trampa_espiritual.gd")
 R_VIENTO = recurso("Script", "res://script/corriente_aire.gd")
+R_GRIETA = recurso("Script", "res://script/chamuco_grieta.gd")
+R_PERSIGUE = recurso("Script", "res://script/chamuco_perseguidor.gd")
+R_ANIMA = recurso("Script", "res://script/anima_errante.gd")
 T = {
     "balero": recurso("Texture2D", "res://assets/cueva/balero.png"),
     "foto": recurso("Texture2D", "res://assets/objetos/retrato_familia.png"),
@@ -127,6 +130,23 @@ tamano = Vector2({ancho}, 260)
 desfase = {desfase}''')
 
 
+def grieta(nombre, x, desfase, calma=(2.2, 3.4), afuera=1.1):
+    nodo(f'''[node name="{nombre}" type="Node2D" parent="."]
+position = Vector2({x}, {PISO})
+script = ExtResource("{R_GRIETA}")
+calma_min = {calma[0]}
+calma_max = {calma[1]}
+afuera = {afuera}
+desfase = {desfase}''')
+
+
+def anima(nombre, x, y, recorrido):
+    nodo(f'''[node name="{nombre}" type="Node2D" parent="."]
+position = Vector2({x}, {y})
+script = ExtResource("{R_ANIMA}")
+recorrido = {recorrido}''')
+
+
 # ---------- Personajes ----------
 nodo(f'''[node name="Xochik" parent="." instance=ExtResource("{R_XOCHIK}")]
 position = Vector2(90, 480)''')
@@ -134,27 +154,39 @@ nodo(f'''[node name="Chicomexochitl" parent="." instance=ExtResource("{R_CHICO}"
 position = Vector2(170, 400)''')
 
 # ---------- Pantalla 1: la boca de la cueva ----------
-# Escalón con el papel picado, la corriente de aire sobre el primer abismo y la pirámide
-# de rocas con el balero en la cima (se puede subir y bajar por ambos lados).
+# Escalón con el papel picado; una grieta con chamuco (se aprende a esperar y pasar);
+# la corriente de aire sobre el abismo y la pirámide de rocas con el balero en la cima.
 roca("P1_RocaBaja", "roca_baja", 250)
 roca("P1_RocaMedia", "roca_media", 335)
 objeto("PapelPicado", "papel_picado", 335, PISO - 92 - 34, 0.13)
-viento("Viento1", 520, 440, 0.0)
+grieta("Grieta1", 455, 1.5)
+viento("Viento1", 640, 260, 0.0)
 roca("P1_PirBaja", "roca_baja", 760)
 roca("P1_PirMedia", "roca_media", 845)
 roca("P1_PirAlta", "roca_alta", 921)
 roca("P1_PirMedia2", "roca_media", 997)
 roca("P1_PirBaja2", "roca_baja", 1082)
 recuerdo("RecuerdoBalero", "balero", 921, PISO - 138 - 38, 0.18, "El balero del abuelo")
+anima("Anima1", 560, 250, 300)
+anima("Anima2", 980, 200, 200)
 
 # ---------- Pantalla 2: el corazón de la montaña ----------
+# La foto despierta al chamuco grande: hay que correr hasta la vela sellando la trampa,
+# esquivando las grietas y saltando el abismo. La luz de la vela lo deshace.
 c = P[1]
+nodo(f'''[node name="ChamucoPerseguidor" type="Node2D" parent="."]
+position = Vector2({c - 150}, {PISO})
+script = ExtResource("{R_PERSIGUE}")''')
+recuerdo("RecuerdoFoto", "foto", c + 130, PISO - 46, 0.13, "La foto del abuelo")
 nodo(f'''[node name="TrampaEspiritual" type="Area2D" parent="."]
 position = Vector2({c + 300}, {PISO})
 script = ExtResource("{R_TRAMPA}")''')
-recuerdo("RecuerdoFoto", "foto", c + 470, PISO - 46, 0.13, "La foto del abuelo")
-viento("Viento2", c + 740, 460, 2.0)
+grieta("Grieta2", c + 470, 0.0, (1.2, 1.8), 0.9)
+grieta("Grieta3", c + 610, 1.2, (1.2, 1.8), 0.9)
+grieta("Grieta4", c + 900, 0.6, (1.4, 2.0), 0.9)
 recuerdo("RecuerdoVela", "vela", c + 1010, PISO - 50, 0.17, "La vela del abuelo")
+anima("Anima3", c + 380, 230, 260)
+anima("Anima4", c + 820, 170, 320)
 
 escena = "[gd_scene format=3]\n\n" + "\n".join(ext) + "\n\n" + "\n\n".join(sub) + "\n\n" + "\n\n".join(nodos) + "\n"
 open(sys.argv[1], "w", encoding="utf-8").write(escena)
