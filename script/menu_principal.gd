@@ -11,6 +11,7 @@ var _panel_info: VBoxContainer
 var _texto_info: Label
 var _titulo_info: Label
 var _tabla_controles: GridContainer
+var _caja_ajustes: VBoxContainer
 var _vela: TextureRect
 var _t := 0.0
 
@@ -92,13 +93,14 @@ func _crear_menu() -> void:
 	_principal = VBoxContainer.new()
 	_principal.add_theme_constant_override("separation", 4)
 	columna.add_child(_principal)
-	_agregar_boton(_principal, "Comenzar", Juego.nuevo_juego)
+	if Juego.hay_partida():
+		_agregar_boton(_principal, "Continuar", Juego.continuar)
+		_agregar_boton(_principal, "Nuevo juego", Juego.nuevo_juego)
+	else:
+		_agregar_boton(_principal, "Comenzar", Juego.nuevo_juego)
+	_agregar_boton(_principal, "Ajustes", _mostrar_ajustes)
 	_agregar_boton(_principal, "Controles", _mostrar_controles)
 	_agregar_boton(_principal, "Créditos", _mostrar_creditos)
-	var b_sustos := Juego.crear_boton(_texto_sustos())
-	b_sustos.alignment = HORIZONTAL_ALIGNMENT_LEFT
-	b_sustos.pressed.connect(_cambiar_sustos.bind(b_sustos))
-	_principal.add_child(b_sustos)
 	_agregar_boton(_principal, "Salir", get_tree().quit)
 	_crear_panel_info(columna)
 
@@ -131,6 +133,14 @@ func _crear_panel_info(columna: VBoxContainer) -> void:
 	_panel_info.add_child(_texto_info)
 	_tabla_controles = _crear_tabla_controles()
 	_panel_info.add_child(_tabla_controles)
+	_caja_ajustes = VBoxContainer.new()
+	_caja_ajustes.add_theme_constant_override("separation", 12)
+	_caja_ajustes.add_child(Juego.crear_controles_volumen())
+	var b_sustos := Juego.crear_boton(_texto_sustos())
+	b_sustos.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	b_sustos.pressed.connect(_cambiar_sustos.bind(b_sustos))
+	_caja_ajustes.add_child(b_sustos)
+	_panel_info.add_child(_caja_ajustes)
 	var volver := Juego.crear_boton("‹  Volver")
 	volver.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	volver.pressed.connect(_mostrar_principal)
@@ -140,10 +150,11 @@ func _crear_panel_info(columna: VBoxContainer) -> void:
 func _cambiar_sustos(boton: Button) -> void:
 	Juego.sustos_activos = not Juego.sustos_activos
 	boton.text = _texto_sustos()
+	Juego.guardar_ajustes()
 
 
 func _texto_sustos() -> String:
-	return "Sustos: " + ("Sí" if Juego.sustos_activos else "No")
+	return "Sustos (jumpscares): " + ("Sí" if Juego.sustos_activos else "No")
 
 
 func _agregar_boton(caja: Container, texto: String, accion: Callable) -> void:
@@ -154,15 +165,19 @@ func _agregar_boton(caja: Container, texto: String, accion: Callable) -> void:
 
 
 func _mostrar_principal() -> void:
+	if _panel_info.visible:
+		Juego.guardar_ajustes()
 	_panel_info.visible = false
 	_principal.visible = true
 	_principal.get_child(0).grab_focus()
 
 
-func _mostrar_info(titulo: String, texto: String, con_controles: bool = false) -> void:
+func _mostrar_info(titulo: String, texto: String, con_controles: bool = false, con_ajustes: bool = false) -> void:
 	_titulo_info.text = titulo
 	_texto_info.text = texto
+	_texto_info.visible = texto != ""
 	_tabla_controles.visible = con_controles
+	_caja_ajustes.visible = con_ajustes
 	_principal.visible = false
 	_panel_info.visible = true
 	_panel_info.get_child(_panel_info.get_child_count() - 1).grab_focus()
@@ -170,6 +185,10 @@ func _mostrar_info(titulo: String, texto: String, con_controles: bool = false) -
 
 func _mostrar_controles() -> void:
 	_mostrar_info("Controles", "No puedes pelear: escóndete, quédate quieta y cuida tu luz.", true)
+
+
+func _mostrar_ajustes() -> void:
+	_mostrar_info("Ajustes", "", false, true)
 
 
 func _mostrar_creditos() -> void:
@@ -184,11 +203,12 @@ func _crear_tabla_controles() -> GridContainer:
 	var filas := [
 		["A / D   ·   ← →", "Moverse"],
 		["Espacio", "Saltar"],
-		["S   ·   ↓", "Agacharse / esconderse en arbustos"],
+		["S   ·   ↓", "Agacharse · esconderse · cubrir la llama del viento"],
 		["E", "Tomar objetos · avanzar diálogo"],
-		["Q", "Quemar copal (dispersa chaneques)"],
+		["Q", "Quemar copal (dispersa chaneques, revela pasajes)"],
 		["R", "Lanzar piedrita (distrae chaneques)"],
 		["C", "Amuleto bordado (el Nahual no te siente)"],
+		["V", "Esparcir pétalos (marcan el camino)"],
 		["F  (mantener)", "Ocultar la luz de la vela"],
 		["Esc", "Pausa"],
 	]

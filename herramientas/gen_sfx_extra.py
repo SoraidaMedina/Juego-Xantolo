@@ -1,4 +1,4 @@
-"""Efectos nuevos: piedrita, campanas, murmullo del pueblo, vela que se enciende.
+"""Efectos nuevos: piedrita, campanas, murmullo del pueblo, vela que se enciende, viento de la cueva.
 Uso: python gen_sfx_extra.py <carpeta assets/audio> <carpeta temporal>
 """
 import os
@@ -80,9 +80,24 @@ def susto_suave():
     return A.normalizar(A.reverb(out, 2.0, 0.5), 0.7)
 
 
+def viento():
+    """Ráfaga de la cueva: silbido que crece (aviso) y sopla fuerte unos segundos."""
+    dur = 3.6
+    t = A.t_(dur)
+    envolvente = np.clip(t / 1.3, 0, 1) ** 2 * np.clip((dur - t) / 0.8, 0, 1)
+    soplo = A.filtro(rng.standard_normal(len(t)), "band", [180, 1400]) * envolvente
+    silbido = np.zeros_like(t)
+    for f0, a in ((620, 0.5), (910, 0.3)):
+        fase = 2 * np.pi * np.cumsum(f0 * (1 + 0.06 * np.sin(t * 2.3)) / A.SR)
+        silbido += a * np.sin(fase)
+    silbido *= A.filtro(rng.standard_normal(len(t)), "low", 30) * 4 * envolvente
+    out = soplo + 0.25 * silbido
+    return A.normalizar(A.reverb(out, 1.2, 0.3), 0.7)
+
+
 if __name__ == "__main__":
     os.makedirs(os.path.join(A.TMP, "sfx"), exist_ok=True)
     for nombre, fn in [("piedrita", piedrita), ("campanas", campanas), ("murmullo", murmullo), ("vela", vela),
-                       ("susto", susto), ("susto_suave", susto_suave)]:
+                       ("susto", susto), ("susto_suave", susto_suave), ("viento", viento)]:
         A.guardar("sfx/" + nombre, fn(), 4)
         print(nombre)

@@ -41,7 +41,6 @@ size = Vector2(146, 6)
 
 [node name="Nivel3Monte" type="Node2D" unique_id=945253347]
 script = ExtResource("1_upsg6")
-siguiente_nivel = "uid://caa73006n0ct8"
 
 [node name="Fondo" type="Sprite2D" parent="." unique_id=598846160]
 z_index = -10
@@ -155,6 +154,7 @@ reaparece = false
 [node name="Amuleto" parent="." instance=ExtResource("40_obj")]
 position = Vector2(963, 600)
 tipo = "amuleto"
+oculto_hasta = "petalos"
 textura = ExtResource("42_amuleto")
 escala = 0.9
 reaparece = false

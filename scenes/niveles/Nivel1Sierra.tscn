@@ -11,16 +11,18 @@
 [ext_resource type="PackedScene" path="res://scenes/escondite.tscn" id="9_r"]
 [ext_resource type="PackedScene" path="res://scenes/plataforma.tscn" id="10_r"]
 [ext_resource type="Script" path="res://script/agua.gd" id="11_r"]
-[ext_resource type="Texture2D" uid="uid://cb1n100qh4ce2" path="res://assets/objetos/vela2.png" id="12_r"]
-[ext_resource type="Texture2D" uid="uid://db24rsa2a3ihc" path="res://assets/objetos/flor_cempasuchil.png" id="13_r"]
-[ext_resource type="Texture2D" uid="uid://bodpu73f5uhdv" path="res://assets/objetos/copal.png" id="14_r"]
-[ext_resource type="Texture2D" uid="uid://buiru4pr2l80t" path="res://assets/objetos/petalos.png" id="15_r"]
-[ext_resource type="Texture2D" path="res://assets/sierra/arco_xantolo.png" id="16_r"]
-[ext_resource type="Texture2D" path="res://assets/sierra/roca_baja.png" id="17_r"]
-[ext_resource type="Texture2D" path="res://assets/sierra/roca_media.png" id="18_r"]
-[ext_resource type="Texture2D" path="res://assets/sierra/roca_alta.png" id="19_r"]
-[ext_resource type="Texture2D" path="res://assets/sierra/tronco.png" id="20_r"]
-[ext_resource type="Texture2D" path="res://assets/sierra/piedra_rio.png" id="21_r"]
+[ext_resource type="Script" path="res://script/pasaje_oculto.gd" id="12_r"]
+[ext_resource type="Texture2D" path="res://assets/hud/vida.png" id="13_r"]
+[ext_resource type="Texture2D" uid="uid://cb1n100qh4ce2" path="res://assets/objetos/vela2.png" id="14_r"]
+[ext_resource type="Texture2D" uid="uid://db24rsa2a3ihc" path="res://assets/objetos/flor_cempasuchil.png" id="15_r"]
+[ext_resource type="Texture2D" uid="uid://bodpu73f5uhdv" path="res://assets/objetos/copal.png" id="16_r"]
+[ext_resource type="Texture2D" uid="uid://buiru4pr2l80t" path="res://assets/objetos/petalos.png" id="17_r"]
+[ext_resource type="Texture2D" path="res://assets/sierra/arco_xantolo.png" id="18_r"]
+[ext_resource type="Texture2D" path="res://assets/sierra/roca_baja.png" id="19_r"]
+[ext_resource type="Texture2D" path="res://assets/sierra/roca_media.png" id="20_r"]
+[ext_resource type="Texture2D" path="res://assets/sierra/roca_alta.png" id="21_r"]
+[ext_resource type="Texture2D" path="res://assets/sierra/tronco.png" id="22_r"]
+[ext_resource type="Texture2D" path="res://assets/sierra/piedra_rio.png" id="23_r"]
 
 [sub_resource type="RectangleShape2D" id="Rect_1"]
 size = Vector2(2871, 40)
@@ -126,15 +128,15 @@ position = Vector2(190, 400)
 z_index = -1
 texture_filter = 1
 position = Vector2(470, 374)
-texture = ExtResource("16_r")
+texture = ExtResource("18_r")
 
 [node name="P1_Tronco" type="StaticBody2D" parent="."]
-position = Vector2(720, 560)
+position = Vector2(680, 560)
 
 [node name="Sprite2D" type="Sprite2D" parent="P1_Tronco"]
 texture_filter = 1
 position = Vector2(0, -23.0)
-texture = ExtResource("20_r")
+texture = ExtResource("22_r")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="P1_Tronco"]
 position = Vector2(0, -22.0)
@@ -146,7 +148,7 @@ position = Vector2(880, 560)
 [node name="Sprite2D" type="Sprite2D" parent="P1_RocaBaja"]
 texture_filter = 1
 position = Vector2(0, -25.0)
-texture = ExtResource("17_r")
+texture = ExtResource("19_r")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="P1_RocaBaja"]
 position = Vector2(0, -23.0)
@@ -158,7 +160,7 @@ position = Vector2(965, 560)
 [node name="Sprite2D" type="Sprite2D" parent="P1_RocaMedia"]
 texture_filter = 1
 position = Vector2(0, -48.0)
-texture = ExtResource("18_r")
+texture = ExtResource("20_r")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="P1_RocaMedia"]
 position = Vector2(0, -46.0)
@@ -170,7 +172,7 @@ position = Vector2(1050, 560)
 [node name="Sprite2D" type="Sprite2D" parent="P1_RocaBaja2"]
 texture_filter = 1
 position = Vector2(0, -25.0)
-texture = ExtResource("17_r")
+texture = ExtResource("19_r")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="P1_RocaBaja2"]
 position = Vector2(0, -23.0)
@@ -179,13 +181,52 @@ shape = SubResource("Rect_8")
 [node name="Copal1" parent="." instance=ExtResource("8_r")]
 position = Vector2(965, 432)
 tipo = "copal"
-textura = ExtResource("14_r")
+textura = ExtResource("16_r")
+reaparece = false
+
+[node name="PasajeOculto" type="Node2D" parent="."]
+position = Vector2(960, 380)
+script = ExtResource("12_r")
+zona_pista = Vector2(260, 170)
+
+[node name="PiedraAnima1" parent="PasajeOculto" instance=ExtResource("10_r")]
+position = Vector2(98, 53)
+textura = ExtResource("23_r")
+escala = 1.0
+tamano_colision = Vector2(52, 12)
+ajuste_colision_y = -7.0
+flote = 2.5
+recorrido_x = 0.0
+
+[node name="PiedraAnima2" parent="PasajeOculto" instance=ExtResource("10_r")]
+position = Vector2(8, 5)
+textura = ExtResource("23_r")
+escala = 1.0
+tamano_colision = Vector2(52, 12)
+ajuste_colision_y = -7.0
+flote = 2.5
+recorrido_x = 0.0
+
+[node name="PiedraAnima3" parent="PasajeOculto" instance=ExtResource("10_r")]
+position = Vector2(-82, -43)
+textura = ExtResource("23_r")
+escala = 1.0
+tamano_colision = Vector2(52, 12)
+ajuste_colision_y = -7.0
+flote = 2.5
+recorrido_x = 0.0
+
+[node name="Veladora" parent="." instance=ExtResource("8_r")]
+position = Vector2(878, 288)
+tipo = "veladora"
+textura = ExtResource("13_r")
+escala = 2.0
 reaparece = false
 
 [node name="Copal2" parent="." instance=ExtResource("8_r")]
 position = Vector2(1282, 510)
 tipo = "copal"
-textura = ExtResource("14_r")
+textura = ExtResource("16_r")
 reaparece = false
 
 [node name="P2_Arbusto1" parent="." instance=ExtResource("9_r")]
@@ -201,7 +242,7 @@ position = Vector2(1792, 560)
 [node name="Sprite2D" type="Sprite2D" parent="P2_RocaBaja"]
 texture_filter = 1
 position = Vector2(0, -25.0)
-texture = ExtResource("17_r")
+texture = ExtResource("19_r")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="P2_RocaBaja"]
 position = Vector2(0, -23.0)
@@ -213,7 +254,7 @@ position = Vector2(1877, 560)
 [node name="Sprite2D" type="Sprite2D" parent="P2_RocaMedia"]
 texture_filter = 1
 position = Vector2(0, -48.0)
-texture = ExtResource("18_r")
+texture = ExtResource("20_r")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="P2_RocaMedia"]
 position = Vector2(0, -46.0)
@@ -225,7 +266,7 @@ position = Vector2(1953, 560)
 [node name="Sprite2D" type="Sprite2D" parent="P2_RocaAlta"]
 texture_filter = 1
 position = Vector2(0, -71.0)
-texture = ExtResource("19_r")
+texture = ExtResource("21_r")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="P2_RocaAlta"]
 position = Vector2(0, -69.0)
@@ -237,7 +278,7 @@ position = Vector2(2029, 560)
 [node name="Sprite2D" type="Sprite2D" parent="P2_RocaMedia2"]
 texture_filter = 1
 position = Vector2(0, -48.0)
-texture = ExtResource("18_r")
+texture = ExtResource("20_r")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="P2_RocaMedia2"]
 position = Vector2(0, -46.0)
@@ -249,7 +290,7 @@ position = Vector2(2114, 560)
 [node name="Sprite2D" type="Sprite2D" parent="P2_RocaBaja2"]
 texture_filter = 1
 position = Vector2(0, -25.0)
-texture = ExtResource("17_r")
+texture = ExtResource("19_r")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="P2_RocaBaja2"]
 position = Vector2(0, -23.0)
@@ -258,7 +299,7 @@ shape = SubResource("Rect_13")
 [node name="Flor" parent="." instance=ExtResource("8_r")]
 position = Vector2(1953, 386)
 tipo = "flor"
-textura = ExtResource("13_r")
+textura = ExtResource("15_r")
 reaparece = false
 
 [node name="P2_Arbusto2" parent="." instance=ExtResource("9_r")]
@@ -271,7 +312,7 @@ distancia_patrulla = 45
 [node name="Vela" parent="." instance=ExtResource("8_r")]
 position = Vector2(2272, 510)
 tipo = "vela"
-textura = ExtResource("12_r")
+textura = ExtResource("14_r")
 reaparece = false
 
 [node name="P3_Arbusto1" parent="." instance=ExtResource("9_r")]
@@ -290,7 +331,7 @@ position = Vector2(2799, 510)
 
 [node name="P3_Piedra1" parent="." instance=ExtResource("10_r")]
 position = Vector2(2911, 569)
-textura = ExtResource("21_r")
+textura = ExtResource("23_r")
 escala = 1.0
 tamano_colision = Vector2(52, 12)
 ajuste_colision_y = -7.0
@@ -299,7 +340,7 @@ recorrido_x = 0.0
 
 [node name="P3_Piedra2" parent="." instance=ExtResource("10_r")]
 position = Vector2(2989, 569)
-textura = ExtResource("21_r")
+textura = ExtResource("23_r")
 escala = 1.0
 tamano_colision = Vector2(52, 12)
 ajuste_colision_y = -7.0
@@ -308,7 +349,7 @@ recorrido_x = 16.0
 
 [node name="P3_Piedra3" parent="." instance=ExtResource("10_r")]
 position = Vector2(3067, 569)
-textura = ExtResource("21_r")
+textura = ExtResource("23_r")
 escala = 1.0
 tamano_colision = Vector2(52, 12)
 ajuste_colision_y = -7.0
@@ -318,7 +359,7 @@ recorrido_x = 0.0
 [node name="Petalos" parent="." instance=ExtResource("8_r")]
 position = Vector2(2989, 490)
 tipo = "petalos"
-textura = ExtResource("15_r")
+textura = ExtResource("17_r")
 reaparece = false
 
 [node name="P3_RocaBaja" type="StaticBody2D" parent="."]
@@ -327,7 +368,7 @@ position = Vector2(3234, 560)
 [node name="Sprite2D" type="Sprite2D" parent="P3_RocaBaja"]
 texture_filter = 1
 position = Vector2(0, -25.0)
-texture = ExtResource("17_r")
+texture = ExtResource("19_r")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="P3_RocaBaja"]
 position = Vector2(0, -23.0)

@@ -43,6 +43,8 @@ R_OBJ = recurso("PackedScene", "res://scenes/objeto_ofrenda.tscn")
 R_ESCONDITE = recurso("PackedScene", "res://scenes/escondite.tscn")
 R_PLAT = recurso("PackedScene", "res://scenes/plataforma.tscn")
 R_AGUA = recurso("Script", "res://script/agua.gd")
+R_PASAJE = recurso("Script", "res://script/pasaje_oculto.gd")
+R_VIDA = recurso("Texture2D", "res://assets/hud/vida.png")
 T = {
     "vela": recurso("Texture2D", "res://assets/objetos/vela2.png", "uid://cb1n100qh4ce2"),
     "flor": recurso("Texture2D", "res://assets/objetos/flor_cempasuchil.png", "uid://db24rsa2a3ihc"),
@@ -109,10 +111,10 @@ position = Vector2(0, {-alto / 2})
 shape = SubResource("{sid}")''')
 
 
-def piedra(nombre, x, recorrido=0.0):
-    """Piedra del arroyo: flota y se mece; se sube desde abajo."""
-    nodo(f'''[node name="{nombre}" parent="." instance=ExtResource("{R_PLAT}")]
-position = Vector2({x}, {PISO + 9})
+def piedra(nombre, x, recorrido=0.0, y=PISO + 9, padre="."):
+    """Piedra del arroyo: flota y se mece; se sube desde abajo. Su superficie queda en y - 13."""
+    nodo(f'''[node name="{nombre}" parent="{padre}" instance=ExtResource("{R_PLAT}")]
+position = Vector2({x}, {y})
 textura = ExtResource("{T['piedra_rio']}")
 escala = 1.0
 tamano_colision = Vector2(52, 12)
@@ -157,11 +159,28 @@ position = Vector2(190, 400)''')
 # ---------- Pantalla 1: la vereda del cañaveral (aprender sin peligro) ----------
 # Las rocas forman escalera de los DOS lados (pirámide): siempre se puede regresar.
 decorado("ArcoXantolo", "arco_xantolo", 470)
-roca("P1_Tronco", "tronco", 720)                 # saltar por encima
+# Entre el tronco y la roca queda piso libre de sobra (Xochik mide 36 px de ancho):
+# un hueco más angosto que ella la dejaba atorada sobre las dos esquinas.
+roca("P1_Tronco", "tronco", 680)                 # saltar por encima
 roca("P1_RocaBaja", "roca_baja", 880)            # escalón 1
 roca("P1_RocaMedia", "roca_media", 965)          # escalón 2, con copal arriba
 roca("P1_RocaBaja2", "roca_baja", 1050)          # escalón de bajada (y de regreso)
 objeto("Copal1", "copal", 965, PISO - 92 - 36)
+# Pasaje de las ánimas: piedras invisibles sobre la roca del copal. Solo motas tenues lo delatan;
+# al quemar copal [Q] aparecen y llevan a una veladora (una vida más).
+PASAJE = (960, 380)
+nodo(f'''[node name="PasajeOculto" type="Node2D" parent="."]
+position = Vector2({PASAJE[0]}, {PASAJE[1]})
+script = ExtResource("{R_PASAJE}")
+zona_pista = Vector2(260, 170)''')
+for _i, (_x, _sup) in enumerate([(1058, 420), (968, 372), (878, 324)]):
+    piedra(f"PiedraAnima{_i + 1}", _x - PASAJE[0], y=_sup + 13 - PASAJE[1], padre="PasajeOculto")
+nodo(f'''[node name="Veladora" parent="." instance=ExtResource("{R_OBJ}")]
+position = Vector2(878, 288)
+tipo = "veladora"
+textura = ExtResource("{R_VIDA}")
+escala = 2.0
+reaparece = false''')
 
 # ---------- Pantalla 2: el bosque de los chaneques ----------
 b = P[1]

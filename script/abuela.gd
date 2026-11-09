@@ -49,6 +49,11 @@ func _process(_delta: float) -> void:
 		_saltar = true
 
 
+## El HUD se hace a un lado mientras la abuela habla (para no tapar su globo)
+func esta_hablando() -> bool:
+	return _hablando
+
+
 ## Dice los mensajes uno por uno y luego se va. Se puede esperar con: await abuela.decir([...])
 func decir(mensajes: PackedStringArray) -> void:
 	var j = get_tree().get_first_node_in_group("jugador")

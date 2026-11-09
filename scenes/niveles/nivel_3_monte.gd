@@ -22,24 +22,38 @@ extends Node2D
 	"Si viene hacia ti, no corras, mija: quieta y con la luz oculta… pasará de largo.",
 	"Si encuentras arbustos, agáchate [%agachar%] entre ellos. Ahí no te puede ver.",
 	"Más abajo las ánimas perdidas dejaron una trampa: manos que salen de la niebla. Séllala con papel picado [E].",
-	"Y si tu abuelo te dejó su amuleto bordado, úsalo [C]: por un momento el Nahual no podrá sentirte.",
+	"Te guardé un puñado de pétalos de cempasúchil. Espárcelos [V]: marcan el camino… y descubren lo que está escondido.",
+	"Tu abuelo escondió su amuleto bordado por aquí. Úsalo [C] y por un momento el Nahual no podrá sentirte.",
 	"Sube por las rocas hasta el hueco de la montaña. Por dentro de la cueva se llega al pueblo.",
 	"Llega antes del amanecer, mija. Tu familia te espera.",
 ]
 @export var segundos_por_mensaje: float = 4.5
+## Pétalos de cempasúchil: al esparcirlos [V] marcan el tramo de camino que sigue y revelan lo oculto
+@export var petalos_iniciales: int = 3
+@export var petalos_por_tramo: int = 7
+@export var duracion_petalos: float = 12.0
+@export var radio_revelar: float = 360.0
+## Camino correcto hasta la cueva, en orden (sobre las rocas y el suelo)
+@export var camino_petalos: PackedVector2Array = [
+	Vector2(1200, 385), Vector2(1192, 522), Vector2(1109, 555), Vector2(1042, 590),
+	Vector2(963, 642), Vector2(880, 666), Vector2(790, 666), Vector2(700, 666),
+	Vector2(610, 666), Vector2(520, 666), Vector2(430, 666), Vector2(351, 637),
+	Vector2(252, 590), Vector2(136, 550), Vector2(160, 496), Vector2(269, 458),
+	Vector2(225, 405), Vector2(194, 362),
+]
 
 var luz: float
 var _luz_oculta := false
 var _luz_agotada := false
 var _luz: PointLight2D
 var _oscuro: CanvasModulate
+var _tex_luz: GradientTexture2D
 
 var _jugador: Node
-var _hud: Label
-var _barra: ProgressBar
+var _hud  # script/hud.gd
+const HUD := preload("res://script/hud.gd")
+const PETALO := preload("res://assets/hud/ofrenda_petalos.png")
 var _mensaje: Label
-var _alerta: Label
-var _ayuda: Label
 var _terminado := false
 var _vigilando := 0
 var _aviso_mostrado := false
@@ -51,13 +65,15 @@ func _ready() -> void:
 	add_to_group("nivel")
 	_asegurar_accion("interactuar", KEY_E)
 	_asegurar_accion("ocultar_luz", KEY_F)
+	_asegurar_accion("esparcir_petalos", KEY_V)
 	luz = luz_max
 	_jugador = get_tree().get_first_node_in_group("jugador")
 	_configurar_camara()
 	_crear_oscuridad_y_luz()
 	_crear_hud()
 	if _jugador:
-		_jugador.vidas_cambiadas.connect(func(_v): _actualizar_hud())
+		_hud.preparar(_jugador)
+		_jugador.petalos = petalos_iniciales
 		_jugador.sin_vidas.connect(_game_over)
 	for n in get_tree().get_nodes_in_group("nahual"):
 		n.vigilancia.connect(_on_vigilancia)
@@ -110,6 +126,80 @@ func _process(delta: float) -> void:
 	_actualizar_hud()
 
 
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("esparcir_petalos"):
+		_esparcir_petalos()
+
+
+# ---------- Pétalos de cempasúchil ----------
+
+## Los pétalos vuelan y se posan, brillando, sobre el tramo de camino que sigue hacia la cueva.
+## Lo que las ánimas escondieron cerca (el amuleto) aparece.
+func _esparcir_petalos() -> void:
+	if not _jugando or _terminado or _jugador == null or _jugador.atrapada:
+		return
+	if _jugador.petalos <= 0:
+		_mostrar_mensaje("Ya no te quedan pétalos…", 1.5)
+		return
+	_jugador.petalos -= 1
+	_hud.usar("petalos")
+	Juego.sfx("recoger", -6.0, 1.4)
+	var desde: Vector2 = _jugador.global_position
+	for n in get_tree().get_nodes_in_group("oculto_petalos"):
+		if n is Node2D and (n as Node2D).global_position.distance_to(desde) <= radio_revelar:
+			n.revelar()
+			_mostrar_mensaje("Los pétalos descubrieron algo escondido…", 2.5)
+	if camino_petalos.is_empty():
+		return
+	var cerca := 0
+	var mejor := INF
+	for i in camino_petalos.size():
+		var d: float = camino_petalos[i].distance_to(desde)
+		if d < mejor:
+			mejor = d
+			cerca = i
+	var fin := mini(cerca + petalos_por_tramo, camino_petalos.size())
+	var k := 0
+	for i in range(cerca, fin):
+		_soltar_petalo(desde + Vector2(0, -30), camino_petalos[i], k * 0.15)
+		k += 1
+
+
+func _soltar_petalo(desde: Vector2, hacia: Vector2, retraso: float) -> void:
+	var p := Node2D.new()
+	p.modulate.a = 0.0
+	add_child(p)
+	p.global_position = desde
+	var spr := Sprite2D.new()
+	spr.texture = PETALO
+	spr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	spr.scale = Vector2(2, 2)
+	spr.position = Vector2(0, -10)
+	p.add_child(spr)
+	var luz_p := PointLight2D.new()
+	luz_p.texture = _tex_luz
+	luz_p.texture_scale = 0.4
+	luz_p.color = Color(1.0, 0.85, 0.6)
+	luz_p.energy = 0.0
+	p.add_child(luz_p)
+	var medio := (desde + hacia) * 0.5 + Vector2(0, -80)
+	var tw := p.create_tween()
+	tw.tween_interval(retraso)
+	tw.tween_property(p, "modulate:a", 1.0, 0.1)
+	tw.tween_method(_mover_petalo.bind(p, desde, medio, hacia), 0.0, 1.0, 0.7).set_trans(Tween.TRANS_SINE)
+	tw.parallel().tween_property(spr, "rotation", randf_range(-0.6, 0.6), 0.7)
+	tw.parallel().tween_property(luz_p, "energy", 0.9, 0.7)
+	tw.tween_property(luz_p, "energy", 0.55, 0.6)
+	tw.tween_interval(duracion_petalos)
+	tw.tween_property(p, "modulate:a", 0.0, 1.5)
+	tw.parallel().tween_property(luz_p, "energy", 0.0, 1.5)
+	tw.tween_callback(p.queue_free)
+
+
+func _mover_petalo(t: float, nodo: Node2D, a: Vector2, b: Vector2, c: Vector2) -> void:
+	nodo.global_position = a.lerp(b, t).lerp(b.lerp(c, t), t)
+
+
 ## La primera vez que el Nahual se acerca, recuerda cómo dejarlo pasar
 func _revisar_cercania() -> void:
 	if _aviso_cerca or _jugador == null:
@@ -123,7 +213,7 @@ func _revisar_cercania() -> void:
 func _on_vigilancia(activa: bool) -> void:
 	_vigilando += 1 if activa else -1
 	_vigilando = maxi(_vigilando, 0)
-	_alerta.visible = _vigilando > 0
+	_hud.alerta("EL NAHUAL VIGILA", _vigilando > 0)
 	if activa and not _aviso_mostrado:
 		_aviso_mostrado = true
 		Juego.susto_ambiente("nahual")
@@ -147,6 +237,7 @@ func _crear_oscuridad_y_luz() -> void:
 	tex.fill_to = Vector2(1.0, 0.5)
 	tex.width = 256
 	tex.height = 256
+	_tex_luz = tex
 
 	_luz = PointLight2D.new()
 	_luz.texture = tex
@@ -172,7 +263,7 @@ func _buscar_chicomexochitl() -> Node:
 
 func _victoria() -> void:
 	_terminado = true
-	_alerta.visible = false
+	_hud.alerta("", false)
 	# Fundido a negro: cruza el monte por dentro de la cueva
 	var negro := ColorRect.new()
 	negro.color = Color(0, 0, 0, 0)
@@ -261,39 +352,19 @@ func _crear_hud() -> void:
 	var capa := CanvasLayer.new()
 	add_child(capa)
 
-	_hud = _label_base(16)
-	_hud.position = Vector2(16, 12)
+	_hud = HUD.new()
 	capa.add_child(_hud)
-
-	var etiqueta := _label_base(13)
-	etiqueta.text = "Luz"
-	etiqueta.position = Vector2(16, 62)
-	capa.add_child(etiqueta)
-
-	_barra = ProgressBar.new()
-	_barra.show_percentage = false
-	_barra.position = Vector2(52, 66)
-	_barra.size = Vector2(160, 12)
-	_barra.max_value = luz_max
-	var fondo_barra := StyleBoxFlat.new()
-	fondo_barra.bg_color = Color(0, 0, 0, 0.6)
-	fondo_barra.border_color = Color(1, 1, 1, 0.3)
-	fondo_barra.set_border_width_all(1)
-	var relleno := StyleBoxFlat.new()
-	relleno.bg_color = Color(0.88, 0.88, 0.88)
-	_barra.add_theme_stylebox_override("background", fondo_barra)
-	_barra.add_theme_stylebox_override("fill", relleno)
-	capa.add_child(_barra)
-
-	_alerta = _label_base(18)
-	_alerta.text = "EL NAHUAL VIGILA"
-	_alerta.set_anchors_preset(Control.PRESET_CENTER_TOP)
-	_alerta.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_alerta.grow_horizontal = Control.GROW_DIRECTION_BOTH
-	_alerta.position.y = 14
-	_alerta.modulate = Color(1, 1, 1)
-	_alerta.visible = false
-	capa.add_child(_alerta)
+	_hud.agregar_ofrenda_del_viaje(true)
+	_hud.mostrar_luz()
+	_hud.agregar_talisman("papel_picado", "interactuar", 0)
+	_hud.agregar_talisman("amuleto", "amuleto", 0)
+	_hud.agregar_talisman("petalos", "esparcir_petalos", petalos_iniciales)
+	_hud.ayuda([
+		[["izquierda", "derecha"], "Moverse"],
+		[["saltar"], "Saltar"],
+		[["agachar"], "Agacharse"],
+		[["ocultar_luz"], "Ocultar luz (mantener)"],
+	])
 
 	_mensaje = _label_base(20)
 	_mensaje.set_anchors_preset(Control.PRESET_CENTER)
@@ -303,12 +374,6 @@ func _crear_hud() -> void:
 	_mensaje.modulate = Color(0.95, 0.95, 0.95)
 	_mensaje.visible = false
 	capa.add_child(_mensaje)
-
-	_ayuda = _label_base(13)
-	_ayuda.position = Vector2(16, get_viewport().get_visible_rect().size.y - 30)
-	_ayuda.modulate = Color(1, 1, 1, 0.75)
-	_ayuda.text = _teclas("[%izquierda%][%derecha%] Moverse   [%saltar%] Saltar   [%agachar%] Agacharse   [F] Ocultar luz (mantener)")
-	capa.add_child(_ayuda)
 	_actualizar_hud()
 
 
@@ -323,21 +388,7 @@ func _label_base(tam: int) -> Label:
 func _actualizar_hud() -> void:
 	if _hud == null:
 		return
-	var txt := ""
-	if _jugador:
-		txt = "Vidas %d/%d" % [_jugador.vidas, _jugador.vidas_max]
-		if _jugador.esta_escondida():
-			txt += "   [Escondida]"
-		if _jugador.protegida:
-			txt += "   [Amuleto]"
-		txt += "\nPapel picado x%d   Amuleto x%d [C]" % [_jugador.papel_picado, _jugador.amuletos]
-	if not luz_visible():
-		txt += "   [Luz oculta]"
-	_hud.text = txt
-	_barra.value = luz
-	_barra.modulate = Color(0.45, 0.45, 0.45) if _luz_agotada else Color.WHITE
-	if _alerta.visible:
-		_alerta.modulate.a = 0.6 + 0.4 * sin(Time.get_ticks_msec() / 120.0)
+	_hud.luz(luz, luz_max, _luz_agotada, _luz_oculta)
 
 
 func _mostrar_mensaje(txt: String, duracion: float) -> void:

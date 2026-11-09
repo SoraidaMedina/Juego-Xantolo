@@ -1,0 +1,239 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/niveles/nivel_4_cueva.gd" id="1_r"]
+[ext_resource type="Texture2D" path="res://assets/cueva/cueva_1.png" id="2_r"]
+[ext_resource type="Texture2D" path="res://assets/cueva/cueva_2.png" id="3_r"]
+[ext_resource type="PackedScene" uid="uid://2mliplafc3uu" path="res://scenes/personajes/Xochik.tscn" id="4_r"]
+[ext_resource type="PackedScene" uid="uid://b8nduubajhyl7" path="res://scenes/personajes/Chicomexochitl.tscn" id="5_r"]
+[ext_resource type="PackedScene" path="res://scenes/objeto_ofrenda.tscn" id="6_r"]
+[ext_resource type="Script" path="res://script/trampa_espiritual.gd" id="7_r"]
+[ext_resource type="Script" path="res://script/corriente_aire.gd" id="8_r"]
+[ext_resource type="Texture2D" path="res://assets/cueva/balero.png" id="9_r"]
+[ext_resource type="Texture2D" path="res://assets/objetos/retrato_familia.png" id="10_r"]
+[ext_resource type="Texture2D" path="res://assets/objetos/vela1.png" id="11_r"]
+[ext_resource type="Texture2D" path="res://assets/objetos/papel_picado.png" id="12_r"]
+[ext_resource type="Texture2D" path="res://assets/sierra/roca_baja.png" id="13_r"]
+[ext_resource type="Texture2D" path="res://assets/sierra/roca_media.png" id="14_r"]
+[ext_resource type="Texture2D" path="res://assets/sierra/roca_alta.png" id="15_r"]
+
+[sub_resource type="RectangleShape2D" id="Rect_1"]
+size = Vector2(560, 40)
+
+[sub_resource type="RectangleShape2D" id="Rect_2"]
+size = Vector2(1212, 40)
+
+[sub_resource type="RectangleShape2D" id="Rect_3"]
+size = Vector2(372, 40)
+
+[sub_resource type="RectangleShape2D" id="Rect_4"]
+size = Vector2(40, 900)
+
+[sub_resource type="RectangleShape2D" id="Rect_5"]
+size = Vector2(90, 46)
+
+[sub_resource type="RectangleShape2D" id="Rect_6"]
+size = Vector2(80, 92)
+
+[sub_resource type="RectangleShape2D" id="Rect_7"]
+size = Vector2(90, 46)
+
+[sub_resource type="RectangleShape2D" id="Rect_8"]
+size = Vector2(80, 92)
+
+[sub_resource type="RectangleShape2D" id="Rect_9"]
+size = Vector2(72, 138)
+
+[sub_resource type="RectangleShape2D" id="Rect_10"]
+size = Vector2(80, 92)
+
+[sub_resource type="RectangleShape2D" id="Rect_11"]
+size = Vector2(90, 46)
+
+[node name="Nivel4Cueva" type="Node2D"]
+script = ExtResource("1_r")
+
+[node name="Fondo1" type="Sprite2D" parent="."]
+z_index = -10
+texture_filter = 1
+position = Vector2(0, 0)
+texture = ExtResource("2_r")
+centered = false
+
+[node name="Fondo2" type="Sprite2D" parent="."]
+z_index = -10
+texture_filter = 1
+position = Vector2(1152, 0)
+texture = ExtResource("3_r")
+centered = false
+
+[node name="Suelo" type="StaticBody2D" parent="."]
+
+[node name="Tramo1" type="CollisionShape2D" parent="Suelo"]
+position = Vector2(280.0, 580)
+shape = SubResource("Rect_1")
+
+[node name="Tramo2" type="CollisionShape2D" parent="Suelo"]
+position = Vector2(1246.0, 580)
+shape = SubResource("Rect_2")
+
+[node name="Tramo3" type="CollisionShape2D" parent="Suelo"]
+position = Vector2(2118.0, 580)
+shape = SubResource("Rect_3")
+
+[node name="ParedIzq" type="CollisionShape2D" parent="Suelo"]
+position = Vector2(-20, 200)
+shape = SubResource("Rect_4")
+
+[node name="ParedDer" type="CollisionShape2D" parent="Suelo"]
+position = Vector2(2324, 200)
+shape = SubResource("Rect_4")
+
+[node name="Xochik" parent="." instance=ExtResource("4_r")]
+position = Vector2(90, 480)
+
+[node name="Chicomexochitl" parent="." instance=ExtResource("5_r")]
+position = Vector2(170, 400)
+
+[node name="P1_RocaBaja" type="StaticBody2D" parent="."]
+position = Vector2(250, 560)
+
+[node name="Sprite2D" type="Sprite2D" parent="P1_RocaBaja"]
+modulate = Color(0.8, 0.8, 0.82, 1)
+texture_filter = 1
+position = Vector2(0, -25.0)
+texture = ExtResource("13_r")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="P1_RocaBaja"]
+position = Vector2(0, -23.0)
+shape = SubResource("Rect_5")
+
+[node name="P1_RocaMedia" type="StaticBody2D" parent="."]
+position = Vector2(335, 560)
+
+[node name="Sprite2D" type="Sprite2D" parent="P1_RocaMedia"]
+modulate = Color(0.8, 0.8, 0.82, 1)
+texture_filter = 1
+position = Vector2(0, -48.0)
+texture = ExtResource("14_r")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="P1_RocaMedia"]
+position = Vector2(0, -46.0)
+shape = SubResource("Rect_6")
+
+[node name="PapelPicado" parent="." instance=ExtResource("6_r")]
+position = Vector2(335, 434)
+tipo = "papel_picado"
+textura = ExtResource("12_r")
+escala = 0.13
+reaparece = false
+
+[node name="Viento1" type="Area2D" parent="."]
+position = Vector2(520, 430)
+script = ExtResource("8_r")
+tamano = Vector2(440, 260)
+desfase = 0.0
+
+[node name="P1_PirBaja" type="StaticBody2D" parent="."]
+position = Vector2(760, 560)
+
+[node name="Sprite2D" type="Sprite2D" parent="P1_PirBaja"]
+modulate = Color(0.8, 0.8, 0.82, 1)
+texture_filter = 1
+position = Vector2(0, -25.0)
+texture = ExtResource("13_r")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="P1_PirBaja"]
+position = Vector2(0, -23.0)
+shape = SubResource("Rect_7")
+
+[node name="P1_PirMedia" type="StaticBody2D" parent="."]
+position = Vector2(845, 560)
+
+[node name="Sprite2D" type="Sprite2D" parent="P1_PirMedia"]
+modulate = Color(0.8, 0.8, 0.82, 1)
+texture_filter = 1
+position = Vector2(0, -48.0)
+texture = ExtResource("14_r")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="P1_PirMedia"]
+position = Vector2(0, -46.0)
+shape = SubResource("Rect_8")
+
+[node name="P1_PirAlta" type="StaticBody2D" parent="."]
+position = Vector2(921, 560)
+
+[node name="Sprite2D" type="Sprite2D" parent="P1_PirAlta"]
+modulate = Color(0.8, 0.8, 0.82, 1)
+texture_filter = 1
+position = Vector2(0, -71.0)
+texture = ExtResource("15_r")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="P1_PirAlta"]
+position = Vector2(0, -69.0)
+shape = SubResource("Rect_9")
+
+[node name="P1_PirMedia2" type="StaticBody2D" parent="."]
+position = Vector2(997, 560)
+
+[node name="Sprite2D" type="Sprite2D" parent="P1_PirMedia2"]
+modulate = Color(0.8, 0.8, 0.82, 1)
+texture_filter = 1
+position = Vector2(0, -48.0)
+texture = ExtResource("14_r")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="P1_PirMedia2"]
+position = Vector2(0, -46.0)
+shape = SubResource("Rect_10")
+
+[node name="P1_PirBaja2" type="StaticBody2D" parent="."]
+position = Vector2(1082, 560)
+
+[node name="Sprite2D" type="Sprite2D" parent="P1_PirBaja2"]
+modulate = Color(0.8, 0.8, 0.82, 1)
+texture_filter = 1
+position = Vector2(0, -25.0)
+texture = ExtResource("13_r")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="P1_PirBaja2"]
+position = Vector2(0, -23.0)
+shape = SubResource("Rect_11")
+
+[node name="RecuerdoBalero" parent="." instance=ExtResource("6_r")]
+position = Vector2(921, 384)
+tipo = "recuerdo"
+textura = ExtResource("9_r")
+escala = 0.18
+recoger_automatico = true
+reaparece = false
+id_recuerdo = "balero"
+nombre_aviso = "El balero del abuelo"
+
+[node name="TrampaEspiritual" type="Area2D" parent="."]
+position = Vector2(1452, 560)
+script = ExtResource("7_r")
+
+[node name="RecuerdoFoto" parent="." instance=ExtResource("6_r")]
+position = Vector2(1622, 514)
+tipo = "recuerdo"
+textura = ExtResource("10_r")
+escala = 0.13
+recoger_automatico = true
+reaparece = false
+id_recuerdo = "foto"
+nombre_aviso = "La foto del abuelo"
+
+[node name="Viento2" type="Area2D" parent="."]
+position = Vector2(1892, 430)
+script = ExtResource("8_r")
+tamano = Vector2(460, 260)
+desfase = 2.0
+
+[node name="RecuerdoVela" parent="." instance=ExtResource("6_r")]
+position = Vector2(2162, 510)
+tipo = "recuerdo"
+textura = ExtResource("11_r")
+escala = 0.17
+recoger_automatico = true
+reaparece = false
+id_recuerdo = "vela"
+nombre_aviso = "La vela del abuelo"

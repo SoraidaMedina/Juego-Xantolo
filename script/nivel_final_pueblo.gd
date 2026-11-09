@@ -40,7 +40,47 @@ extends Node2D
 ## Al restaurarse el ritual, el color regresa al pueblo (amanecer cálido).
 ## Desactívalo si la entrega debe ser 100% en escala de grises.
 @export var color_al_amanecer: bool = true
-@export_multiline var creditos: String = "XANTOLO\nEl Camino de las Ánimas\n\nGuadalupe Mishel Hernández Govea\nSoraida Medina Bautista\nLuis Gustavo Hernández Hernández\n\nUniversidad Tecnológica de la Huasteca Hidalguense\nCreación de Videojuegos · 2026"
+## Créditos finales que suben sobre la fiesta. Cada línea: [tipo, texto].
+## Tipos: titulo, sub, seccion, nombre, par ("Nombre|descripción"), texto, dedicatoria, esp, fin
+@export var creditos: Array = [
+	["titulo", "XANTOLO"],
+	["sub", "El Camino de las Ánimas"],
+	["esp", ""],
+	["seccion", "Un juego de"],
+	["nombre", "Guadalupe Mishel Hernández Govea"],
+	["nombre", "Soraida Medina Bautista"],
+	["nombre", "Luis Gustavo Hernández Hernández"],
+	["esp", ""],
+	["seccion", "Personajes"],
+	["par", "Xochik|la niña del pueblo"],
+	["par", "Chicomexochitl|el Niño del Maíz, vela viviente"],
+	["par", "La abuela|la voz que guía el camino"],
+	["par", "El abuelo|el ánima que vuelve a casa"],
+	["par", "Los chaneques|los dueños de la sierra"],
+	["par", "La Llorona|la madre que busca en el río"],
+	["par", "El Nahual|el que cambia de forma en el monte"],
+	["esp", ""],
+	["seccion", "Música y sonido"],
+	["texto", "Huapango huasteco deconstruido:\nviolín, jarana y quinta huapanguera"],
+	["esp", ""],
+	["seccion", "Herramientas"],
+	["texto", "Godot Engine · Aseprite · Audacity · Git"],
+	["esp", ""],
+	["seccion", "Xantolo"],
+	["texto", "La fiesta de Todos Santos en la Huasteca Hidalguense,\ncuando las ánimas vuelven a casa siguiendo\nel camino de cempasúchil y la luz de las velas."],
+	["texto", "Gracias a las familias de Huejutla de Reyes\nque cada año levantan el arco y ponen la ofrenda."],
+	["esp", ""],
+	["seccion", "Universidad Tecnológica de la Huasteca Hidalguense"],
+	["texto", "Creación de Videojuegos · 2026"],
+	["esp", ""],
+	["esp", ""],
+	["dedicatoria", "Para nuestros abuelos,\nque cada Xantolo encuentran el camino de regreso."],
+	["esp", ""],
+	["esp", ""],
+	["fin", "FIN"],
+]
+## Velocidad a la que suben los créditos (px por segundo)
+@export var velocidad_creditos: float = 42.0
 
 const FIG := "res://assets/pueblo/"
 
@@ -50,7 +90,7 @@ var _capa: CanvasLayer
 var _negro: ColorRect
 var _mensaje: Label
 var _ayuda: Label
-var _creditos: Label
+var _creditos: Control
 var _fin := false
 var _arco: Sprite2D
 var _bailarines: Array[Sprite2D] = []
@@ -658,6 +698,7 @@ func _iniciar_murmullo() -> void:
 	if not ResourceLoader.exists(ruta):
 		return
 	_murmullo = AudioStreamPlayer.new()
+	_murmullo.bus = "Efectos"
 	var st = load(ruta)
 	if st is AudioStreamOggVorbis:
 		st.loop = true
@@ -690,17 +731,77 @@ func _crear_luz(pos: Vector2) -> PointLight2D:
 
 
 func _mostrar_creditos() -> void:
+	Juego.borrar_partida()   # el juego terminó: el menú ya no ofrece "Continuar"
 	var tw := create_tween()
-	tw.tween_property(_negro, "color:a", 0.6, 2.5)   # la fiesta sigue detrás
+	tw.tween_property(_negro, "color:a", 0.62, 2.5)   # la fiesta sigue detrás
 	await tw.finished
-	_creditos.text = creditos
-	_creditos.modulate.a = 0.0
+	var rollo := VBoxContainer.new()
+	rollo.add_theme_constant_override("separation", 8)
+	rollo.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var fin: Control = null
+	for linea in creditos:
+		var n := _linea_credito(String(linea[0]), String(linea[1]))
+		rollo.add_child(n)
+		if String(linea[0]) == "fin":
+			fin = n
+	_creditos.add_child(rollo)
 	_creditos.visible = true
-	create_tween().tween_property(_creditos, "modulate:a", 1.0, 2.0)
-	await get_tree().create_timer(3.0, false).timeout
+	await get_tree().process_frame
+	await get_tree().process_frame
+	var pantalla := get_viewport().get_visible_rect().size
+	rollo.size.x = pantalla.x
+	rollo.position = Vector2(0, pantalla.y + 20)
+	# Sube hasta que "FIN" quede en el centro de la pantalla
+	var centro_fin: float = rollo.size.y
+	if fin:
+		centro_fin = fin.position.y + fin.size.y * 0.5
+	var destino: float = pantalla.y * 0.5 - centro_fin
+	var dur: float = (rollo.position.y - destino) / maxf(velocidad_creditos, 1.0)
+	var sube := create_tween()
+	sube.tween_property(rollo, "position:y", destino, dur)
+	await get_tree().create_timer(6.0, false).timeout
 	_ayuda.text = "[E] Volver al menú"
 	_ayuda.visible = true
 	_fin = true
+
+
+func _linea_credito(tipo: String, texto: String) -> Control:
+	if tipo == "esp":
+		var c := Control.new()
+		c.custom_minimum_size = Vector2(0, 26)
+		return c
+	if tipo == "par":
+		var partes := texto.split("|")
+		var fila := HBoxContainer.new()
+		fila.alignment = BoxContainer.ALIGNMENT_CENTER
+		fila.add_theme_constant_override("separation", 16)
+		var quien := _label(19)
+		quien.text = partes[0]
+		quien.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		quien.custom_minimum_size = Vector2(260, 0)
+		quien.add_theme_color_override("font_color", Color.WHITE)
+		var que := _label(17)
+		que.text = partes[1] if partes.size() > 1 else ""
+		que.custom_minimum_size = Vector2(360, 0)
+		que.modulate = Color(0.78, 0.78, 0.78)
+		fila.add_child(quien)
+		fila.add_child(que)
+		return fila
+	var tam := {"titulo": 54, "sub": 22, "seccion": 15, "nombre": 22, "texto": 17, "dedicatoria": 22, "fin": 44}
+	var l := _label(int(tam.get(tipo, 18)))
+	l.text = texto
+	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	match tipo:
+		"titulo", "fin":
+			l.add_theme_constant_override("outline_size", 8)
+		"seccion":
+			l.text = " ".join(texto.to_upper().split(""))
+			l.modulate = Color(0.62, 0.62, 0.62)
+		"texto":
+			l.modulate = Color(0.85, 0.85, 0.85)
+		"dedicatoria":
+			l.modulate = Color(1.0, 0.92, 0.78)
+	return l
 
 
 # ---------- Cámara ----------
@@ -756,12 +857,10 @@ func _crear_ui() -> void:
 	_mensaje.visible = false
 	_capa.add_child(_mensaje)
 
-	_creditos = _label(22)
-	_creditos.set_anchors_preset(Control.PRESET_CENTER)
-	_creditos.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_creditos.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_creditos.grow_horizontal = Control.GROW_DIRECTION_BOTH
-	_creditos.grow_vertical = Control.GROW_DIRECTION_BOTH
+	_creditos = Control.new()
+	_creditos.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_creditos.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_creditos.clip_contents = true
 	_creditos.visible = false
 	_capa.add_child(_creditos)
 

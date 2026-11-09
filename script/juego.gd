@@ -9,8 +9,19 @@ const NIVELES := [
 	"res://scenes/niveles/Nivel1Sierra.tscn",
 	"res://scenes/niveles/Nivel2Rio.tscn",
 	"res://scenes/niveles/Nivel3Monte.tscn",
+	"res://scenes/niveles/Nivel4Cueva.tscn",
 	"res://scenes/niveles/NivelFinalPueblo.tscn",
 ]
+
+## Título de capítulo que aparece al entrar a cada nivel: [número, nombre, una línea de la historia]
+const CAPITULOS := {
+	"res://scenes/niveles/Nivel1Sierra.tscn": ["CAPÍTULO I", "La Sierra de los Chaneques", "Las risas en la oscuridad no son de niños."],
+	"res://scenes/niveles/Nivel2Rio.tscn": ["CAPÍTULO II", "El Río de la Llorona", "Cada Xantolo, su llanto baja con el agua."],
+	"res://scenes/niveles/Nivel3Monte.tscn": ["CAPÍTULO III", "El Monte del Nahual", "Lo que se mueve, él lo encuentra."],
+	"res://scenes/niveles/Nivel4Cueva.tscn": ["CAPÍTULO IV", "La Cueva del Abuelo", "La montaña guarda lo que tú quisiste olvidar."],
+	"res://scenes/niveles/NivelFinalPueblo.tscn": ["CAPÍTULO V", "El Pueblo: Xantolo roto", "Antes del amanecer, el altar debe arder de nuevo."],
+}
+const ARCHIVO_PARTIDA := "user://partida.cfg"
 
 ## Música de cada escena (assets/audio/musica/<nombre>.ogg)
 const MUSICA_POR_ESCENA := {
@@ -18,6 +29,7 @@ const MUSICA_POR_ESCENA := {
 	"res://scenes/niveles/Nivel1Sierra.tscn": "sierra",
 	"res://scenes/niveles/Nivel2Rio.tscn": "rio",
 	"res://scenes/niveles/Nivel3Monte.tscn": "monte",
+	"res://scenes/niveles/Nivel4Cueva.tscn": "monte",
 	"res://scenes/niveles/NivelFinalPueblo.tscn": "menu",   # al restaurar el ritual cambia a "pueblo"
 }
 const VOLUMEN_MUSICA_DB := -6.0
@@ -34,6 +46,16 @@ var _cambiando := false
 var ofrenda: Array[String] = []
 ## Sustos (jumpscares) activados. Se cambia desde el menú principal.
 var sustos_activos := true
+## Volumen (0 a 1) de la música y de los efectos; se guarda junto con la partida
+var volumen_musica := 0.8
+var volumen_efectos := 0.9
+## Mientras se ve un recuerdo o un título de capítulo no se puede pausar
+var bloquear_pausa := false
+var _capitulo: Control
+var _cap_numero: Label
+var _cap_titulo: Label
+var _cap_linea: Label
+var _saltar_capitulo := false
 var _capa_susto: CanvasLayer
 var _imagen_susto: TextureRect
 var _susto_en_curso := false
@@ -54,6 +76,7 @@ func _ready() -> void:
 	_asegurar_accion("ocultar_luz", KEY_F)
 	_asegurar_accion("lanzar_piedra", KEY_R)
 	_asegurar_accion("amuleto", KEY_C)
+	_asegurar_accion("esparcir_petalos", KEY_V)
 	_crear_pausa()
 	_crear_gameover()
 	_negro = ColorRect.new()
@@ -61,11 +84,18 @@ func _ready() -> void:
 	_negro.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_negro.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(_negro)
+	_crear_buses()
 	_crear_audio()
+	_cargar_ajustes()
+	_crear_capitulo()
 	_actualizar_musica.call_deferred()
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if _capitulo and _capitulo.visible and event.is_pressed() and not event.is_echo():
+		_saltar_capitulo = true
+		get_viewport().set_input_as_handled()
+		return
 	if not event.is_action_pressed("pausa"):
 		return
 	if _pausa.visible:
@@ -98,15 +128,49 @@ func nuevo_juego() -> void:
 	cambiar_escena(NIVELES[0])
 
 
+## Sigue desde el último nivel al que se llegó, con la ofrenda que se llevaba
+func continuar() -> void:
+	var cfg := ConfigFile.new()
+	if cfg.load(ARCHIVO_PARTIDA) != OK:
+		nuevo_juego()
+		return
+	var nivel: String = cfg.get_value("partida", "nivel", NIVELES[0])
+	ofrenda.clear()
+	for ruta in cfg.get_value("partida", "ofrenda", []):
+		ofrenda.append(str(ruta))
+	cambiar_escena(nivel if NIVELES.has(nivel) else NIVELES[0])
+
+
+func hay_partida() -> bool:
+	var cfg := ConfigFile.new()
+	return cfg.load(ARCHIVO_PARTIDA) == OK and NIVELES.has(cfg.get_value("partida", "nivel", ""))
+
+
+func _guardar_partida(nivel: String) -> void:
+	var cfg := ConfigFile.new()
+	cfg.load(ARCHIVO_PARTIDA)
+	cfg.set_value("partida", "nivel", nivel)
+	cfg.set_value("partida", "ofrenda", Array(ofrenda))
+	cfg.save(ARCHIVO_PARTIDA)
+
+
+func borrar_partida() -> void:
+	var cfg := ConfigFile.new()
+	if cfg.load(ARCHIVO_PARTIDA) == OK and cfg.has_section("partida"):
+		cfg.erase_section("partida")
+		cfg.save(ARCHIVO_PARTIDA)
+
+
 func reiniciar_nivel() -> void:
-	cambiar_escena(_escena_actual())
+	cambiar_escena(_escena_actual(), false)
 
 
 func ir_al_menu() -> void:
 	cambiar_escena(MENU)
 
 
-func cambiar_escena(ruta: String) -> void:
+## con_titulo: muestra el título del capítulo (no al reintentar el mismo nivel)
+func cambiar_escena(ruta: String, con_titulo: bool = true) -> void:
 	if _cambiando or ruta == "":
 		return
 	_cambiando = true
@@ -121,6 +185,10 @@ func cambiar_escena(ruta: String) -> void:
 	await get_tree().process_frame
 	await get_tree().process_frame
 	_actualizar_musica()
+	if NIVELES.has(ruta):
+		_guardar_partida(ruta)
+		if con_titulo and CAPITULOS.has(ruta):
+			await _mostrar_capitulo(CAPITULOS[ruta])
 	var b := create_tween()
 	b.tween_property(_negro, "color:a", 0.0, 0.8)
 	await b.finished
@@ -141,7 +209,7 @@ func agregar_ofrenda(ruta: String) -> void:
 # ---------- Pausa ----------
 
 func _puede_pausar() -> bool:
-	return not _cambiando and not _gameover.visible and NIVELES.has(_escena_actual())
+	return not _cambiando and not bloquear_pausa and not _gameover.visible and NIVELES.has(_escena_actual())
 
 
 func pausar() -> void:
@@ -152,6 +220,7 @@ func pausar() -> void:
 
 
 func reanudar() -> void:
+	guardar_ajustes()
 	_volumen_musica(VOLUMEN_MUSICA_DB)
 	_pausa.visible = false
 	get_tree().paused = false
@@ -191,6 +260,8 @@ func _crear_pausa() -> void:
 	var b_menu := crear_boton("Menú principal")
 	b_menu.pressed.connect(ir_al_menu)
 	caja.add_child(b_menu)
+	caja.add_child(_espacio(18))
+	caja.add_child(crear_controles_volumen())
 	caja.add_child(_espacio(16))
 	var ayuda := crear_texto("[Esc] Continuar", 13)
 	ayuda.modulate = GRIS_TENUE
@@ -367,12 +438,160 @@ func _crear_audio() -> void:
 	for i in 2:
 		var m := AudioStreamPlayer.new()
 		m.volume_db = -80.0
+		m.bus = "Musica"
 		add_child(m)
 		_musica.append(m)
 	for i in 10:
 		var p := AudioStreamPlayer.new()
+		p.bus = "Efectos"
 		add_child(p)
 		_sfx.append(p)
+
+
+## Dos canales de audio (música y efectos) para poder ajustar su volumen por separado
+func _crear_buses() -> void:
+	for nombre in ["Musica", "Efectos"]:
+		if AudioServer.get_bus_index(nombre) == -1:
+			AudioServer.add_bus()
+			var i := AudioServer.bus_count - 1
+			AudioServer.set_bus_name(i, nombre)
+			AudioServer.set_bus_send(i, "Master")
+
+
+func ajustar_volumen(canal: String, valor: float) -> void:
+	valor = clampf(valor, 0.0, 1.0)
+	if canal == "Musica":
+		volumen_musica = valor
+	else:
+		volumen_efectos = valor
+	var i := AudioServer.get_bus_index(canal)
+	if i >= 0:
+		AudioServer.set_bus_volume_db(i, linear_to_db(maxf(valor, 0.0001)))
+		AudioServer.set_bus_mute(i, valor <= 0.01)
+
+
+func guardar_ajustes() -> void:
+	var cfg := ConfigFile.new()
+	cfg.load(ARCHIVO_PARTIDA)
+	cfg.set_value("ajustes", "musica", volumen_musica)
+	cfg.set_value("ajustes", "efectos", volumen_efectos)
+	cfg.set_value("ajustes", "sustos", sustos_activos)
+	cfg.save(ARCHIVO_PARTIDA)
+
+
+func _cargar_ajustes() -> void:
+	var cfg := ConfigFile.new()
+	if cfg.load(ARCHIVO_PARTIDA) == OK:
+		volumen_musica = float(cfg.get_value("ajustes", "musica", volumen_musica))
+		volumen_efectos = float(cfg.get_value("ajustes", "efectos", volumen_efectos))
+		sustos_activos = bool(cfg.get_value("ajustes", "sustos", sustos_activos))
+	ajustar_volumen("Musica", volumen_musica)
+	ajustar_volumen("Efectos", volumen_efectos)
+
+
+## Dos barras (Música y Efectos) listas para poner en un menú; guardan al soltarlas
+func crear_controles_volumen() -> VBoxContainer:
+	var caja := VBoxContainer.new()
+	caja.add_theme_constant_override("separation", 10)
+	caja.add_child(_fila_volumen("Música", "Musica", volumen_musica))
+	caja.add_child(_fila_volumen("Efectos", "Efectos", volumen_efectos))
+	return caja
+
+
+func _fila_volumen(texto: String, canal: String, valor: float) -> HBoxContainer:
+	var fila := HBoxContainer.new()
+	fila.add_theme_constant_override("separation", 14)
+	var nombre := crear_texto(texto, 16)
+	nombre.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	nombre.custom_minimum_size = Vector2(90, 0)
+	fila.add_child(nombre)
+	var barra := HSlider.new()
+	barra.min_value = 0.0
+	barra.max_value = 1.0
+	barra.step = 0.05
+	barra.value = valor
+	barra.custom_minimum_size = Vector2(200, 24)
+	barra.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	var pista := StyleBoxFlat.new()
+	pista.bg_color = Color(0.25, 0.25, 0.25)
+	pista.content_margin_top = 3
+	pista.content_margin_bottom = 3
+	pista.set_corner_radius_all(2)
+	var lleno := StyleBoxFlat.new()
+	lleno.bg_color = Color(0.85, 0.85, 0.85)
+	lleno.set_corner_radius_all(2)
+	barra.add_theme_stylebox_override("slider", pista)
+	barra.add_theme_stylebox_override("grabber_area", lleno)
+	barra.add_theme_stylebox_override("grabber_area_highlight", lleno)
+	fila.add_child(barra)
+	var porcentaje := crear_texto("%d%%" % roundi(valor * 100), 14)
+	porcentaje.custom_minimum_size = Vector2(48, 0)
+	porcentaje.modulate = GRIS_TENUE
+	fila.add_child(porcentaje)
+	barra.value_changed.connect(_al_mover_volumen.bind(canal, porcentaje))
+	barra.drag_ended.connect(_al_soltar_volumen)
+	return fila
+
+
+func _al_mover_volumen(valor: float, canal: String, porcentaje: Label) -> void:
+	ajustar_volumen(canal, valor)
+	porcentaje.text = "%d%%" % roundi(valor * 100)
+	if canal == "Efectos":
+		sfx("ui", -4.0)
+
+
+func _al_soltar_volumen(_cambio: bool) -> void:
+	guardar_ajustes()
+
+
+# ---------- Títulos de capítulo ----------
+
+func _crear_capitulo() -> void:
+	_capitulo = Control.new()
+	_capitulo.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_capitulo.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_capitulo.visible = false
+	add_child(_capitulo)
+	var caja := _caja_central(_capitulo)
+	caja.add_theme_constant_override("separation", 10)
+	_cap_numero = crear_texto("", 15)
+	_cap_numero.modulate = GRIS_TENUE
+	caja.add_child(_cap_numero)
+	_cap_titulo = crear_titulo("", 40)
+	caja.add_child(_cap_titulo)
+	var raya := ColorRect.new()
+	raya.color = Color(1, 1, 1, 0.35)
+	raya.custom_minimum_size = Vector2(220, 1)
+	raya.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	caja.add_child(raya)
+	_cap_linea = crear_texto("", 17)
+	_cap_linea.modulate = Color(0.75, 0.75, 0.75)
+	caja.add_child(_cap_linea)
+
+
+## Pantalla negra con el capítulo; el nivel espera en pausa. Cualquier tecla la adelanta.
+func _mostrar_capitulo(datos: Array) -> void:
+	get_tree().paused = true
+	bloquear_pausa = true
+	_cap_numero.text = " ".join(String(datos[0]).split(""))
+	_cap_titulo.text = datos[1]
+	_cap_linea.text = datos[2]
+	_capitulo.modulate.a = 0.0
+	_capitulo.visible = true
+	_saltar_capitulo = false
+	var entra := create_tween()
+	entra.tween_property(_capitulo, "modulate:a", 1.0, 0.9)
+	await entra.finished
+	var t := 0.0
+	while t < 2.8 and not _saltar_capitulo:
+		await get_tree().process_frame
+		t += get_process_delta_time()
+	var sale := create_tween()
+	sale.tween_property(_capitulo, "modulate:a", 0.0, 0.7)
+	await sale.finished
+	_capitulo.visible = false
+	bloquear_pausa = false
+	get_tree().paused = false
 
 
 func _actualizar_musica() -> void:

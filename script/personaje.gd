@@ -32,6 +32,8 @@ var objeto_en_mano: Node = null   # pertenencia que carga (nivel 2)
 ## Talismanes (nivel 3): papel picado sella trampas espirituales; el amuleto oculta ante el Nahual
 var papel_picado: int = 0
 var amuletos: int = 0
+## Pétalos de cempasúchil (nivel 3): al esparcirlos marcan el camino y revelan lo oculto
+var petalos: int = 0
 var protegida: bool = false
 @export var duracion_amuleto: float = 5.0
 var _t_amuleto := 0.0
@@ -41,6 +43,9 @@ var _en_suelo_antes := true
 var _radio_visible := 0.0
 var _te_oyen := false   # algún chaneque está dentro del anillo
 var _t_paso := 0.0
+## Apoyada sobre esquinas (ej. atorada en un hueco angosto): no cuenta como piso, pero puede saltar
+var _apoyada := false
+var _t_apoyada := 0.0
 
 
 func _ready() -> void:
@@ -73,12 +78,19 @@ func _physics_process(delta: float) -> void:
 	agachada = is_on_floor() and Input.is_action_pressed("agachar")
 	var dir := Input.get_axis("izquierda", "derecha")
 
-	if Input.is_action_just_pressed("saltar") and is_on_floor() and not agachada:
+	if Input.is_action_just_pressed("saltar") and (is_on_floor() or _apoyada) and not agachada:
 		velocity.y = fuerza_salto
 		Juego.sfx("salto", -4.0, randf_range(0.95, 1.05))
 
 	velocity.x = dir * (velocidad_agachada if agachada else velocidad)
 	move_and_slide()
+	# Si no está en el piso pero algo la sostiene y no cae, está apoyada (no se queda atorada)
+	# (un instante, para que tocar una pared en lo alto del salto no dé un segundo salto)
+	if not is_on_floor() and get_slide_collision_count() > 0 and absf(get_real_velocity().y) < 5.0:
+		_t_apoyada += delta
+	else:
+		_t_apoyada = 0.0
+	_apoyada = _t_apoyada > 0.12
 	if is_on_floor() and not _en_suelo_antes:
 		_ruido_caida = 0.35
 		Juego.sfx("caida", -6.0, randf_range(0.9, 1.1))
@@ -247,13 +259,24 @@ func ser_atrapada(motivo: String = "") -> void:
 	atrapada = false
 
 
-## Texto flotante "-1 vida" en pantalla
+## Veladora de las ánimas: recupera una vida; si ya están todas, suma una veladora más
+func ganar_vida() -> void:
+	if vidas >= vidas_max:
+		vidas_max += 1
+	vidas += 1
+	vidas_cambiadas.emit(vidas)
+	Juego.sfx("vela", -2.0, 1.2)
+
+
+## Motivo en pantalla (la veladora que se apaga en el HUD ya dice que perdiste una vida)
 func _aviso_vida(motivo: String) -> void:
+	if motivo == "":
+		return
 	var capa := CanvasLayer.new()
 	capa.layer = 50
 	get_tree().current_scene.add_child(capa)
 	var l := Label.new()
-	l.text = (motivo + "\n" if motivo != "" else "") + "-1 vida"
+	l.text = motivo
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	l.add_theme_font_size_override("font_size", 22)
 	l.add_theme_color_override("font_color", Color(0.95, 0.95, 0.95))
@@ -262,6 +285,8 @@ func _aviso_vida(motivo: String) -> void:
 	l.set_anchors_preset(Control.PRESET_CENTER)
 	l.grow_horizontal = Control.GROW_DIRECTION_BOTH
 	l.grow_vertical = Control.GROW_DIRECTION_BOTH
+	l.offset_top += 70.0
+	l.offset_bottom += 70.0
 	capa.add_child(l)
 	var tw := capa.create_tween()
 	tw.tween_interval(1.2)

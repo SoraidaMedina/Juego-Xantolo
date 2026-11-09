@@ -23,9 +23,9 @@ extends Node2D
 @export var segundos_por_mensaje: float = 4.0
 
 var _jugador: Node
-var _ayuda: Label
 var _aviso_persecucion := false
-var _hud: Label
+var _hud  # script/hud.gd
+const HUD := preload("res://script/hud.gd")
 var _mensaje: Label
 var _terminado := false
 var _llevaba := ""
@@ -38,7 +38,7 @@ func _ready() -> void:
 	_configurar_camara()
 	_crear_hud()
 	if _jugador:
-		_jugador.vidas_cambiadas.connect(func(_v): _actualizar_hud())
+		_hud.preparar(_jugador)
 		_jugador.sin_vidas.connect(_game_over)
 	for p in get_tree().get_nodes_in_group("pertenencias"):
 		p.tomada.connect(_al_tomar)
@@ -123,6 +123,10 @@ func _victoria() -> void:
 	for p in get_tree().get_nodes_in_group("pertenencias"):
 		if p.es_correcto and p.textura:
 			Juego.agregar_ofrenda(p.textura.resource_path)
+	var ll = get_tree().get_first_node_in_group("llorona")
+	_hud.llenar_ofrenda("juguete", ll.global_position if ll else null)
+	_hud.en_mano(null, "")
+	_hud.objetivo("")
 	_mostrar_mensaje("La Llorona reconoce a sus hijos...\nY por fin encuentra paz", 0.0)
 	await get_tree().create_timer(4.0, false).timeout
 	Juego.ir_a(siguiente_nivel)  # vacío = siguiente nivel de la lista
@@ -139,9 +143,9 @@ func _game_over() -> void:
 func _crear_hud() -> void:
 	var capa := CanvasLayer.new()
 	add_child(capa)
-	_hud = _label_base(16)
-	_hud.position = Vector2(16, 12)
+	_hud = HUD.new()
 	capa.add_child(_hud)
+	_hud.agregar_ofrenda_del_viaje(true)
 	_mensaje = _label_base(20)
 	_mensaje.set_anchors_preset(Control.PRESET_CENTER)
 	_mensaje.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -152,12 +156,12 @@ func _crear_hud() -> void:
 	capa.add_child(_mensaje)
 
 	# Controles siempre visibles abajo
-	_ayuda = _label_base(13)
-	_ayuda.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
-	_ayuda.position = Vector2(16, get_viewport().get_visible_rect().size.y - 30)
-	_ayuda.modulate = Color(1, 1, 1, 0.75)
-	_ayuda.text = _teclas("[%izquierda%][%derecha%] Moverse   [%saltar%] Saltar   [%agachar%] Agacharse / esconderse   [E] Tomar")
-	capa.add_child(_ayuda)
+	_hud.ayuda([
+		[["izquierda", "derecha"], "Moverse"],
+		[["saltar"], "Saltar"],
+		[["agachar"], "Agacharse / esconderse"],
+		[["interactuar"], "Tomar / entregar"],
+	])
 
 
 ## Cambia %accion% por la tecla que tiene asignada en el Mapa de Entrada
@@ -190,14 +194,17 @@ func _label_base(tam: int) -> Label:
 func _actualizar_hud() -> void:
 	if _jugador == null or _hud == null:
 		return
-	var escondida := "   [Escondida]" if _jugador.esta_escondida() else ""
-	var linea2 := "Objetivo: devuélvele a la Llorona el juguete favorito de su hijo"
-	if _jugador.objeto_en_mano:
-		_llevaba = _jugador.objeto_en_mano.nombre
-		linea2 = "Llevas: %s   →   acércate a la Llorona y pulsa [E] para entregarlo" % _llevaba
+	if _terminado:
+		return
+	var en_mano = _jugador.objeto_en_mano
+	if en_mano:
+		_llevaba = en_mano.nombre
+		_hud.en_mano(en_mano.textura, _llevaba)
+		_hud.objetivo("Acércate a la Llorona y entrégaselo  [E]")
 	else:
 		_llevaba = ""
-	_hud.text = "Vidas %d/%d%s\n%s" % [_jugador.vidas, _jugador.vidas_max, escondida, linea2]
+		_hud.en_mano(null, "")
+		_hud.objetivo("Devuélvele a la Llorona el juguete favorito de su hijo")
 
 
 func _mostrar_mensaje(txt: String, duracion: float) -> void:

@@ -35,7 +35,7 @@ var total := {"vela": 0, "flor": 0, "petalos": 0}
 var recogidos := {"vela": 0, "flor": 0, "petalos": 0}
 var copal := 0
 
-var _hud: Label
+var _hud  # script/hud.gd
 var _lugar: Label
 var _mensaje: Label
 var _cortina: ColorRect
@@ -55,6 +55,7 @@ var _tutorial_listo := false
 var _aviso_falta := 0.0
 var _espera_piedra := 0.0
 const PIEDRITA := preload("res://script/piedrita.gd")
+const HUD := preload("res://script/hud.gd")
 
 
 func _ready() -> void:
@@ -65,7 +66,7 @@ func _ready() -> void:
 	_jugador = get_tree().get_first_node_in_group("jugador") as CharacterBody2D
 	if _jugador:
 		_camara = _jugador.get_node_or_null("Camera2D") as Camera2D
-		_jugador.vidas_cambiadas.connect(func(_v): _actualizar_hud())
+		_hud.preparar(_jugador)
 		_jugador.sin_vidas.connect(_game_over)
 	for obj in get_tree().get_nodes_in_group("recolectable"):
 		obj.recogido.connect(_on_objeto_recogido)
@@ -209,6 +210,7 @@ func _lanzar_piedra() -> void:
 	if _espera_piedra > 0.0 or not _jugando or _jugador == null or _jugador.atrapada:
 		return
 	_espera_piedra = 1.2
+	_hud.usar("piedrita")
 	var anim = _jugador.get_node_or_null("AnimatedSprite2D")
 	var direccion := -1.0 if (anim != null and anim.flip_h) else 1.0
 	var p := PIEDRITA.new()
@@ -220,12 +222,16 @@ func _on_objeto_recogido(obj: ObjetoOfrenda) -> void:
 	match obj.tipo:
 		"vela", "flor", "petalos":
 			recogidos[obj.tipo] += 1
+			_hud.llenar_ofrenda(obj.tipo, obj.global_position)
 		"copal":
 			copal += 1
 			_poner_copal_en_mano(obj.textura)
 			if not _tip_copal:
 				_tip_copal = true
-				_decir("Copal: su humo aleja a los chaneques un rato  [Q].  No lo desperdicies.", 3.5)
+				_decir("Copal: su humo aleja a los chaneques  [Q]…\ny revela lo que las ánimas esconden. ¿Ves esas motas en el aire?", 4.5)
+		"veladora":
+			_jugador.ganar_vida()
+			_decir("Una veladora de las ánimas… tu luz se hace más fuerte.", 3.0)
 	_actualizar_hud()
 	_revisar_victoria()
 
@@ -235,6 +241,7 @@ func _usar_copal() -> void:
 		return
 	copal -= 1
 	_actualizar_hud()
+	_hud.usar("copal")
 	Juego.sfx("copal")
 	_humo_copal(_jugador.global_position + Vector2(0, -20))
 	if copal == 0 and _copal_mano:
@@ -242,6 +249,14 @@ func _usar_copal() -> void:
 	for c in get_tree().get_nodes_in_group("chaneques"):
 		if c.global_position.distance_to(_jugador.global_position) <= radio_copal and c.has_method("dispersar"):
 			c.dispersar()
+	# El humo revela los pasajes y objetos que las ánimas esconden en esta pantalla
+	var revelo := false
+	for n in get_tree().get_nodes_in_group("oculto_copal"):
+		if n is Node2D and misma_pantalla((n as Node2D).global_position):
+			n.revelar()
+			revelo = true
+	if revelo:
+		_decir("El humo del copal reveló un camino de las ánimas…", 3.0)
 
 
 func _revisar_victoria() -> void:
@@ -343,9 +358,19 @@ func _crear_hud() -> void:
 	_cortina.set_anchors_preset(Control.PRESET_FULL_RECT)
 	capa.add_child(_cortina)
 
-	_hud = _label_base(16)
-	_hud.position = Vector2(16, 12)
+	_hud = HUD.new()
 	capa.add_child(_hud)
+	_hud.agregar_ofrenda("vela", "Vela")
+	_hud.agregar_ofrenda("flor", "Flor de cempasúchil")
+	_hud.agregar_ofrenda("petalos", "Pétalos")
+	_hud.agregar_talisman("copal", "usar_copal", 0)
+	_hud.agregar_talisman("piedrita", "lanzar_piedra", -1)
+	_hud.ayuda([
+		[["izquierda", "derecha"], "Moverse"],
+		[["saltar"], "Saltar"],
+		[["agachar"], "Agacharse (silencio)"],
+		[["interactuar"], "Tomar"],
+	])
 
 	_lugar = _label_base(22)
 	_lugar.set_anchors_preset(Control.PRESET_CENTER_TOP)
@@ -374,12 +399,7 @@ func _label_base(tam: int) -> Label:
 
 
 func _actualizar_hud() -> void:
-	var vidas_txt := ""
-	if _jugador:
-		vidas_txt = "Vidas %d/%d   " % [_jugador.vidas, _jugador.vidas_max]
-	_hud.text = vidas_txt + "Vela %d/%d   Flor %d/%d   Pétalos %d/%d   Copal x%d [Q]   Piedrita [R]" % [
-		recogidos["vela"], total["vela"], recogidos["flor"], total["flor"],
-		recogidos["petalos"], total["petalos"], copal]
+	_hud.talisman("copal", copal)
 
 
 func _asegurar_accion(nombre: String, tecla: Key) -> void:
