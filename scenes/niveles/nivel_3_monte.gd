@@ -1,6 +1,7 @@
 extends Node2D
-## Nivel 3 — El Monte del Nahual
-## Objetivo: cruzar el monte hasta el pueblo sin que el Nahual te cace.
+## Nivel 3 — El Monte del Nahual (2 escenarios: la ladera y el valle de la cueva)
+## Objetivo: cruzar el monte hasta la cueva sin que los Nahuales te cacen.
+## La ladera enseña (un Nahual paciente, una trampa); en el valle hay dos Nahuales más alertas.
 ## Cuando el Nahual vigila: quédate QUIETA y OCULTA LA LUZ [F]. La luz se gasta mientras brilla.
 
 @export var ancho_nivel: int = 1152
@@ -15,28 +16,28 @@ extends Node2D
 @export var radio_luz: float = 1.6
 ## Diálogo de la abuela (o mensajes en pantalla si no hay abuela)
 @export var mensajes_tutorial: PackedStringArray = [
-	"Este es el Monte del Nahual, mija. Detrás de estos cerros ya está el pueblo.",
-	"El Nahual no ve bien en la oscuridad… pero siente cuando algo se mueve, y la luz lo atrae.",
-	"Cuando se detenga a vigilar, quédate quieta… y oculta la luz de Chicomexochitl con [F].",
-	"Esa luz se gasta mientras brilla y regresa cuando la ocultas. No la desperdicies.",
-	"Si viene hacia ti, no corras, mija: quieta y con la luz oculta… pasará de largo.",
-	"Si encuentras arbustos, agáchate [%agachar%] entre ellos. Ahí no te puede ver.",
-	"Más abajo las ánimas perdidas dejaron una trampa: manos que salen de la niebla. Séllala con papel picado [E].",
-	"Te guardé un puñado de pétalos de cempasúchil. Espárcelos [V]: marcan el camino… y descubren lo que está escondido.",
-	"Tu abuelo escondió su amuleto bordado por aquí. Úsalo [C] y por un momento el Nahual no podrá sentirte.",
-	"Sube por las rocas hasta el hueco de la montaña. Por dentro de la cueva se llega al pueblo.",
-	"Llega antes del amanecer, mija. Tu familia te espera.",
+	"Es el Monte del Nahual, mija. Cuando vigile, quédate quieta y oculta la luz [F].",
+	"Papel picado [E] para las manos, pétalos [V] para lo escondido, amuleto [C] para que no te sienta.",
+	"Sube hasta la cueva antes del amanecer.",
 ]
 @export var segundos_por_mensaje: float = 4.5
 ## Pétalos de cempasúchil: al esparcirlos [V] marcan el tramo de camino que sigue y revelan lo oculto
-@export var petalos_iniciales: int = 3
+@export var petalos_iniciales: int = 4
 @export var petalos_por_tramo: int = 7
 @export var duracion_petalos: float = 12.0
 @export var radio_revelar: float = 360.0
 ## Camino correcto hasta la cueva, en orden (sobre las rocas y el suelo)
 @export var camino_petalos: PackedVector2Array = [
-	Vector2(1200, 385), Vector2(1192, 522), Vector2(1109, 555), Vector2(1042, 590),
-	Vector2(963, 642), Vector2(880, 666), Vector2(790, 666), Vector2(700, 666),
+	# Escenario 1: la ladera
+	Vector2(2600, 666), Vector2(2500, 666), Vector2(2420, 666), Vector2(2330, 620),
+	Vector2(2240, 666), Vector2(2150, 666), Vector2(2060, 666), Vector2(1990, 666),
+	Vector2(1915, 620), Vector2(1830, 575), Vector2(1760, 666), Vector2(1705, 666),
+	# Los escalones del risco y la cima
+	Vector2(1625, 620), Vector2(1575, 573), Vector2(1525, 526), Vector2(1475, 479),
+	Vector2(1425, 432), Vector2(1375, 385), Vector2(1290, 385), Vector2(1200, 385),
+	# Escenario 2: bajar por las escaleras del risco al valle y subir a la cueva
+	Vector2(1192, 522), Vector2(1109, 555), Vector2(1042, 590), Vector2(963, 642),
+	Vector2(880, 666), Vector2(790, 666), Vector2(700, 666),
 	Vector2(610, 666), Vector2(520, 666), Vector2(430, 666), Vector2(351, 637),
 	Vector2(252, 590), Vector2(136, 550), Vector2(160, 496), Vector2(269, 458),
 	Vector2(225, 405), Vector2(194, 362),
@@ -330,15 +331,22 @@ func _configurar_camara() -> void:
 	if camara == null:
 		return
 	camara.zoom = Vector2.ONE
-	var fondo := get_node_or_null("Fondo") as Sprite2D
-	if fondo and fondo.texture:
+	# Los límites salen de todos los Sprite2D cuyo nombre empieza con "Fondo" (uno por escenario)
+	var caja := Rect2()
+	var hay_fondo := false
+	for n in get_children():
+		var fondo := n as Sprite2D
+		if fondo == null or not fondo.name.begins_with("Fondo") or fondo.texture == null:
+			continue
 		var r := fondo.get_rect()
-		var esq1 := fondo.to_global(r.position)
-		var esq2 := fondo.to_global(r.end)
-		camara.limit_left = int(minf(esq1.x, esq2.x))
-		camara.limit_top = int(minf(esq1.y, esq2.y))
-		camara.limit_right = int(maxf(esq1.x, esq2.x))
-		camara.limit_bottom = int(maxf(esq1.y, esq2.y))
+		var rect := Rect2(fondo.to_global(r.position), Vector2.ZERO).expand(fondo.to_global(r.end))
+		caja = rect if not hay_fondo else caja.merge(rect)
+		hay_fondo = true
+	if hay_fondo:
+		camara.limit_left = int(caja.position.x)
+		camara.limit_top = int(caja.position.y)
+		camara.limit_right = int(caja.end.x)
+		camara.limit_bottom = int(caja.end.y)
 	else:
 		camara.limit_left = 0
 		camara.limit_top = 0

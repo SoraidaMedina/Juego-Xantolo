@@ -18,6 +18,13 @@
 [ext_resource type="Texture2D" uid="uid://c4hma8cebwv2t" path="res://assets/objetos/piedra_runas.png" id="15_bieiw"]
 [ext_resource type="PackedScene" path="res://scenes/escondite.tscn" id="17_bieiw"]
 [ext_resource type="PackedScene" path="res://scenes/personajes/Abuela.tscn" id="18_n442u"]
+[ext_resource type="Texture2D" path="res://assets/fondos/rio_1_orilla.png" id="19_orilla"]
+[ext_resource type="Texture2D" path="res://assets/fondos/rio_2_rapidos.png" id="20_rapidos"]
+[ext_resource type="Texture2D" path="res://assets/sierra/piedra_rio.png" id="21_piedra"]
+[ext_resource type="Script" path="res://script/agua.gd" id="22_agua"]
+[ext_resource type="Texture2D" path="res://assets/objetos/rio_mata.png" id="23_mata"]
+[ext_resource type="Texture2D" path="res://assets/objetos/morral.png" id="24_morral"]
+[ext_resource type="Texture2D" path="res://assets/objetos/canasta.png" id="25_canasta"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_hgy67"]
 size = Vector2(742.5, 40)
@@ -32,6 +39,24 @@ size = Vector2(40, 960)
 resource_local_to_scene = true
 size = Vector2(594.625, 112)
 
+[sub_resource type="RectangleShape2D" id="Rect_orilla1"]
+size = Vector2(765, 40)
+
+[sub_resource type="RectangleShape2D" id="Rect_orilla2"]
+size = Vector2(600, 40)
+
+[sub_resource type="RectangleShape2D" id="Rect_islote"]
+size = Vector2(100, 40)
+
+[sub_resource type="RectangleShape2D" id="Rect_rapidos3"]
+size = Vector2(270, 40)
+
+[sub_resource type="RectangleShape2D" id="Rect_arroyo"]
+size = Vector2(320, 60)
+
+[sub_resource type="RectangleShape2D" id="Rect_rapidos"]
+size = Vector2(920, 60)
+
 [node name="Nivel2Rio" type="Node2D" unique_id=945253347]
 script = ExtResource("1_0n5he")
 
@@ -41,6 +66,18 @@ position = Vector2(709, 467)
 scale = Vector2(0.844, 0.844)
 texture = ExtResource("2_0w4l2")
 
+[node name="FondoOrilla" type="Sprite2D" parent="."]
+z_index = -10
+position = Vector2(-2109.96, 467)
+scale = Vector2(0.844, 0.844)
+texture = ExtResource("19_orilla")
+
+[node name="FondoRapidos" type="Sprite2D" parent="."]
+z_index = -10
+position = Vector2(-700.48, 467)
+scale = Vector2(0.844, 0.844)
+texture = ExtResource("20_rapidos")
+
 [node name="Suelo" type="StaticBody2D" parent="." unique_id=752122026]
 position = Vector2(576, 580)
 
@@ -49,18 +86,34 @@ position = Vector2(-193.25, 192)
 shape = SubResource("RectangleShape2D_hgy67")
 
 [node name="ParedIzq" type="CollisionShape2D" parent="Suelo" unique_id=1217428556]
-position = Vector2(-576, -182.5)
+position = Vector2(-3411, -182.5)
 shape = SubResource("RectangleShape2D_xglk0")
+
+[node name="Orilla1" type="CollisionShape2D" parent="Suelo"]
+position = Vector2(-3008.5, 192)
+shape = SubResource("Rect_orilla1")
+
+[node name="Orilla2" type="CollisionShape2D" parent="Suelo"]
+position = Vector2(-2026, 192)
+shape = SubResource("Rect_orilla2")
+
+[node name="Islote" type="CollisionShape2D" parent="Suelo"]
+position = Vector2(-1246, 192)
+shape = SubResource("Rect_islote")
+
+[node name="Rapidos3" type="CollisionShape2D" parent="Suelo"]
+position = Vector2(-691, 192)
+shape = SubResource("Rect_rapidos3")
 
 [node name="ParedDer" type="CollisionShape2D" parent="Suelo" unique_id=143034594]
 position = Vector2(843, -203)
 shape = SubResource("RectangleShape2D_7uhor")
 
 [node name="Xochik" parent="." unique_id=509951126 instance=ExtResource("3_0w4l2")]
-position = Vector2(191, 601)
+position = Vector2(-2700, 700)
 
 [node name="Chicomexochitl" parent="." unique_id=894604400 instance=ExtResource("4_4p0we")]
-position = Vector2(263, 467)
+position = Vector2(-2628, 566)
 distancia_x = 70.0
 
 [node name="PuntoControl" parent="." unique_id=1220790569 instance=ExtResource("5_akyw3")]
@@ -69,9 +122,11 @@ position = Vector2(93, 636)
 [node name="Llorona" parent="." unique_id=1874109392 instance=ExtResource("6_4p0we")]
 position = Vector2(1050, 571)
 script = ExtResource("7_j23ev")
-velocidad = 50.0
+velocidad = 65.0
 velocidad_persecucion = 115.0
 distancia_patrulla = 250.0
+limite_izq = -2600.0
+limite_der = 1300.0
 rango_contacto = 60.0
 tiempo_busqueda = 2.5
 flota = true
@@ -84,22 +139,22 @@ es_correcto = true
 textura = ExtResource("8_j23ev")
 
 [node name="Pertenencia2" parent="." unique_id=506433682 instance=ExtResource("7_akyw3")]
-position = Vector2(103, 658)
+position = Vector2(-1450, 725)
 nombre = "Conejo de peluche"
 textura = ExtResource("9_bieiw")
 
 [node name="Pertenencia3" parent="." unique_id=1969473680 instance=ExtResource("7_akyw3")]
-position = Vector2(528, 600)
+position = Vector2(-770, 718)
 nombre = "Peine"
 textura = ExtResource("10_n442u")
 
 [node name="Pertenencia4" parent="." unique_id=1975942596 instance=ExtResource("7_akyw3")]
-position = Vector2(772, 648)
+position = Vector2(-110, 725)
 nombre = "Retrato"
 textura = ExtResource("11_f6kk8")
 
 [node name="Pertenencia5" parent="." unique_id=341134949 instance=ExtResource("7_akyw3")]
-position = Vector2(1080, 740)
+position = Vector2(-2250, 725)
 nombre = "Huaraches"
 textura = ExtResource("12_dmwfw")
 
@@ -153,7 +208,165 @@ position = Vector2(0, 19)
 position = Vector2(199, 692)
 
 [node name="Abuela" parent="." unique_id=1874403481 instance=ExtResource("18_n442u")]
-position = Vector2(338, 686)
+position = Vector2(-2540, 686)
+
+[node name="AguaArroyo" type="Area2D" parent="."]
+position = Vector2(-1900, 812)
+script = ExtResource("22_agua")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="AguaArroyo"]
+shape = SubResource("Rect_arroyo")
+
+[node name="Orilla_Piedra1" parent="." instance=ExtResource("14_j23ev")]
+position = Vector2(-1950, 761)
+textura = ExtResource("21_piedra")
+escala = 1.0
+tamano_colision = Vector2(52, 12)
+ajuste_colision_y = -7.0
+flote = 2.5
+recorrido_x = 0.0
+
+[node name="Orilla_Piedra2" parent="." instance=ExtResource("14_j23ev")]
+position = Vector2(-1850, 761)
+textura = ExtResource("21_piedra")
+escala = 1.0
+tamano_colision = Vector2(52, 12)
+ajuste_colision_y = -7.0
+flote = 2.5
+recorrido_x = 12.0
+
+[node name="PuntoControlOrilla" parent="." instance=ExtResource("5_akyw3")]
+position = Vector2(-1650, 636)
+
+[node name="AguaRapidos" type="Area2D" parent="."]
+position = Vector2(-700, 812)
+script = ExtResource("22_agua")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="AguaRapidos"]
+shape = SubResource("Rect_rapidos")
+
+[node name="Rapidos_Piedra1" parent="." instance=ExtResource("14_j23ev")]
+position = Vector2(-1060, 761)
+textura = ExtResource("21_piedra")
+escala = 1.0
+tamano_colision = Vector2(52, 12)
+ajuste_colision_y = -7.0
+flote = 2.5
+recorrido_x = 0.0
+
+[node name="Rapidos_Piedra2" parent="." instance=ExtResource("14_j23ev")]
+position = Vector2(-960, 761)
+textura = ExtResource("21_piedra")
+escala = 1.0
+tamano_colision = Vector2(52, 12)
+ajuste_colision_y = -7.0
+flote = 2.5
+recorrido_x = 20.0
+
+[node name="Rapidos_Piedra3" parent="." instance=ExtResource("14_j23ev")]
+position = Vector2(-860, 761)
+textura = ExtResource("21_piedra")
+escala = 1.0
+tamano_colision = Vector2(52, 12)
+ajuste_colision_y = -7.0
+flote = 2.5
+recorrido_x = 0.0
+se_hunde = true
+
+[node name="Rapidos_Piedra4" parent="." instance=ExtResource("14_j23ev")]
+position = Vector2(-770, 761)
+textura = ExtResource("21_piedra")
+escala = 1.0
+tamano_colision = Vector2(52, 12)
+ajuste_colision_y = -7.0
+flote = 2.5
+recorrido_x = 0.0
+
+[node name="Rapidos_Piedra5" parent="." instance=ExtResource("14_j23ev")]
+position = Vector2(-530, 761)
+textura = ExtResource("21_piedra")
+escala = 1.0
+tamano_colision = Vector2(52, 12)
+ajuste_colision_y = -7.0
+flote = 2.5
+recorrido_x = 22.0
+
+[node name="Rapidos_Piedra6" parent="." instance=ExtResource("14_j23ev")]
+position = Vector2(-430, 761)
+textura = ExtResource("21_piedra")
+escala = 1.0
+tamano_colision = Vector2(52, 12)
+ajuste_colision_y = -7.0
+flote = 2.5
+recorrido_x = 0.0
+se_hunde = true
+
+[node name="Rapidos_Piedra7" parent="." instance=ExtResource("14_j23ev")]
+position = Vector2(-335, 761)
+textura = ExtResource("21_piedra")
+escala = 1.0
+tamano_colision = Vector2(52, 12)
+ajuste_colision_y = -7.0
+flote = 2.5
+recorrido_x = 0.0
+
+[node name="PuntoControlIslote" parent="." instance=ExtResource("5_akyw3")]
+position = Vector2(-670, 636)
+
+[node name="Pertenencia6" parent="." instance=ExtResource("7_akyw3")]
+position = Vector2(-1290, 725)
+nombre = "Morral"
+textura = ExtResource("24_morral")
+
+[node name="Pertenencia7" parent="." instance=ExtResource("7_akyw3")]
+position = Vector2(520, 700)
+nombre = "Canasta"
+textura = ExtResource("25_canasta")
+
+[node name="EsconditeRio1" parent="." instance=ExtResource("17_bieiw")]
+position = Vector2(-2400, 717)
+
+[node name="Mata" type="Sprite2D" parent="EsconditeRio1"]
+z_index = 2
+texture_filter = 1
+position = Vector2(0, 0)
+texture = ExtResource("23_mata")
+
+[node name="EsconditeRio2" parent="." instance=ExtResource("17_bieiw")]
+position = Vector2(-1580, 717)
+
+[node name="Mata" type="Sprite2D" parent="EsconditeRio2"]
+z_index = 2
+texture_filter = 1
+position = Vector2(0, 0)
+texture = ExtResource("23_mata")
+
+[node name="EsconditeRio3" parent="." instance=ExtResource("17_bieiw")]
+position = Vector2(-1220, 717)
+
+[node name="Mata" type="Sprite2D" parent="EsconditeRio3"]
+z_index = 2
+texture_filter = 1
+position = Vector2(0, 0)
+texture = ExtResource("23_mata")
+
+[node name="EsconditeRio4" parent="." instance=ExtResource("17_bieiw")]
+position = Vector2(-680, 717)
+
+[node name="Mata" type="Sprite2D" parent="EsconditeRio4"]
+z_index = 2
+texture_filter = 1
+position = Vector2(0, 0)
+texture = ExtResource("23_mata")
+
+[node name="EsconditeRio5" parent="." instance=ExtResource("17_bieiw")]
+position = Vector2(-170, 717)
+
+[node name="Mata" type="Sprite2D" parent="EsconditeRio5"]
+z_index = 2
+texture_filter = 1
+position = Vector2(0, 0)
+texture = ExtResource("23_mata")
 
 [editable path="Agua"]
 [editable path="Escondite"]

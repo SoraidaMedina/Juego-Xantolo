@@ -9,6 +9,10 @@ signal calmada
 @export var velocidad: float = 50.0
 @export var velocidad_persecucion: float = 115.0
 @export var distancia_patrulla: float = 250.0
+## (Opcional) Recorre de este x a este otro en lugar de quedarse cerca de donde empieza.
+## Si los dos valen 0 se usa distancia_patrulla.
+@export var limite_izq: float = 0.0
+@export var limite_der: float = 0.0
 @export var rango_vision: float = 260.0
 @export var rango_contacto: float = 60.0
 ## Segundos que busca antes de volver a patrullar si te pierde de vista
@@ -42,6 +46,9 @@ func _ready() -> void:
 	_altura_base = global_position.y
 	if flota:
 		collision_mask = 0   # atraviesa suelo y plataformas
+		# Y es un espíritu: no empuja a Xochik (si no, al pasar encima la sacaba del arbusto).
+		# El encuentro se detecta por distancia en _revisar_contacto.
+		collision_layer = 0
 	_icono = Label.new()
 	_icono.add_theme_font_size_override("font_size", 22)
 	_icono.add_theme_color_override("font_outline_color", Color.BLACK)
@@ -142,9 +149,14 @@ func _physics_process(delta: float) -> void:
 func _patrullar() -> void:
 	anim.speed_scale = 1.0
 	velocity.x = dir * velocidad
-	if global_position.x > inicio_x + distancia_patrulla:
+	var izq := inicio_x - distancia_patrulla
+	var der := inicio_x + distancia_patrulla
+	if limite_der > limite_izq:
+		izq = limite_izq
+		der = limite_der
+	if global_position.x > der:
 		dir = -1.0
-	elif global_position.x < inicio_x - distancia_patrulla:
+	elif global_position.x < izq:
 		dir = 1.0
 	elif is_on_wall():
 		dir = -dir

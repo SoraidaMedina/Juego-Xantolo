@@ -14,6 +14,10 @@ Scripts que generaron recursos provisionales. No los necesita el juego para corr
 - `gen_cueva.py` — dibuja la Cueva del abuelo: los fondos de sus dos pantallas, el balero y los nueve
   recuerdos sin texto (teatro de sombras) en `assets/cueva/`.
 - `gen_nivel4.py` — arma `Nivel4Cueva.tscn` (abismos, rocas, corrientes de aire, trampa y recuerdos).
+- `gen_rio.py` — dibuja los fondos de los dos tramos nuevos del Río (la orilla y los rápidos) a partir
+  de `rio_llorona_bg.png`. Uso: `python gen_rio.py ../assets/fondos ../assets/objetos` (también dibuja la mata de los escondites)
+- `gen_monte.py` — dibuja el fondo de la ladera (primer escenario del Monte del Nahual) a partir de
+  `monte_nahual_bg.png`. Uso: `python gen_monte.py ../assets/fondos`
 - `gen_sfx_extra.py` — además de sus efectos, sintetiza `viento.ogg` (las ráfagas de la cueva).
 
 Cuando el equipo tenga grabaciones reales de huapango o fondos dibujados a mano,

@@ -6,6 +6,9 @@ extends Area2D
 
 @export var ancho: float = 96.0
 @export var alto: float = 150.0
+## Px extra hacia arriba que alcanzan las manos (sin cambiar cómo se ve): úsalo si hay una roca
+## cerca desde la que se podría saltar la trampa por encima
+@export var alcance_extra: float = 0.0
 
 var activa := true
 var _manos: Sprite2D
@@ -17,10 +20,10 @@ var _t := 0.0
 func _ready() -> void:
 	add_to_group("trampas")
 	var forma := RectangleShape2D.new()
-	forma.size = Vector2(ancho * 0.7, alto)
+	forma.size = Vector2(ancho * 0.7, alto + alcance_extra)
 	var cs := CollisionShape2D.new()
 	cs.shape = forma
-	cs.position = Vector2(0, -alto / 2.0)
+	cs.position = Vector2(0, -(alto + alcance_extra) / 2.0)
 	add_child(cs)
 	body_entered.connect(_al_entrar)
 

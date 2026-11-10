@@ -12,13 +12,8 @@ extends Node2D
 ## Mensajes de ayuda que salen después de la pista (uno tras otro)
 ## Diálogo de la abuela (o mensajes en pantalla si no hay abuela), en orden
 @export var mensajes_tutorial: PackedStringArray = [
-	"Ay, mija… este es el río de la Llorona. Cada noche de Xantolo busca a sus hijos, llorando.",
-	"Su llanto no es de maldad, es de tristeza. Solo se calma si le devuelves algo de su hijo.",
-	"Su hijo era muy inquieto. Su juguete favorito lo enredaba con un cordel, lo lanzaba… y bailaba dando vueltas sobre la tierra.",
-	"Por la orilla hay cosas tiradas. Toma una con [E]. Solo puedes cargar una: si tomas otra, la primera regresa a su lugar.",
-	"Cuando tengas la correcta, acércate a la Llorona y entrégasela con [E]. Si te equivocas, perderás una vida.",
-	"Si te ve con las manos vacías, te seguirá: escóndete en un arbusto y agáchate [%agachar%].",
-	"Y cuidado con el agua, mija: salta de piedra en piedra. Ve con Dios.",
+	"Ay, mija… es el río de la Llorona.",
+	"Devuélvele el juguete de su hijo: se enreda en un cordel y baila dando vueltas.",
 ]
 @export var segundos_por_mensaje: float = 4.0
 
@@ -30,6 +25,7 @@ var _mensaje: Label
 var _terminado := false
 var _llevaba := ""
 var _aviso_cambio := false
+var _aviso_piedra := false
 
 
 func _ready() -> void:
@@ -42,6 +38,9 @@ func _ready() -> void:
 		_jugador.sin_vidas.connect(_game_over)
 	for p in get_tree().get_nodes_in_group("pertenencias"):
 		p.tomada.connect(_al_tomar)
+	for n in get_children():
+		if n.has_signal("empieza_a_hundirse"):
+			n.empieza_a_hundirse.connect(_al_hundirse_piedra)
 	var llorona = get_tree().get_first_node_in_group("llorona")
 	if llorona:
 		llorona.calmada.connect(_victoria)
@@ -85,6 +84,14 @@ func _process(_delta: float) -> void:
 			_mostrar_mensaje(_teclas("¡Te vio! Corre a un arbusto y agáchate [%agachar%]"), 3.0)
 
 
+## La primera piedra floja que se hunde explica qué pasa
+func _al_hundirse_piedra() -> void:
+	if _aviso_piedra or _terminado:
+		return
+	_aviso_piedra = true
+	_mostrar_mensaje("¡Las piedras oscuras se hunden! No te quedes quieta encima.", 3.0)
+
+
 ## Explica por qué "regresa" el objeto anterior al tomar otro
 func _al_tomar(obj: Node) -> void:
 	if _llevaba != "" and _llevaba != obj.nombre and not _aviso_cambio:
@@ -101,16 +108,25 @@ func _configurar_camara() -> void:
 	if camara == null:
 		return
 	camara.zoom = Vector2.ONE
-	# Si hay un Sprite2D llamado "Fondo", los límites salen de su tamaño real
-	var fondo := get_node_or_null("Fondo") as Sprite2D
-	if fondo and fondo.texture:
+	# Los límites salen de todos los Sprite2D cuyo nombre empieza con "Fondo" (un fondo por tramo)
+	var caja := Rect2()
+	var hay_fondo := false
+	for n in get_children():
+		var fondo := n as Sprite2D
+		if fondo == null or not fondo.name.begins_with("Fondo") or fondo.texture == null:
+			continue
 		var r := fondo.get_rect()
 		var esq1 := fondo.to_global(r.position)
 		var esq2 := fondo.to_global(r.end)
-		camara.limit_left = int(minf(esq1.x, esq2.x))
-		camara.limit_top = int(minf(esq1.y, esq2.y))
-		camara.limit_right = int(maxf(esq1.x, esq2.x))
-		camara.limit_bottom = int(maxf(esq1.y, esq2.y))
+		var rect := Rect2(esq1, Vector2.ZERO).expand(esq2)
+		caja = rect if not hay_fondo else caja.merge(rect)
+		hay_fondo = true
+	if hay_fondo:
+		# 1 px hacia dentro arriba y abajo: los fondos nuevos miden 1 px menos de alto que el original
+		camara.limit_left = int(caja.position.x)
+		camara.limit_top = int(caja.position.y) + 1
+		camara.limit_right = int(caja.end.x)
+		camara.limit_bottom = int(caja.end.y) - 1
 	else:
 		camara.limit_left = 0
 		camara.limit_top = 0
@@ -204,7 +220,7 @@ func _actualizar_hud() -> void:
 	else:
 		_llevaba = ""
 		_hud.en_mano(null, "")
-		_hud.objetivo("Devuélvele a la Llorona el juguete favorito de su hijo")
+		_hud.objetivo("Busca a lo largo del río el juguete favorito de su hijo")
 
 
 func _mostrar_mensaje(txt: String, duracion: float) -> void:

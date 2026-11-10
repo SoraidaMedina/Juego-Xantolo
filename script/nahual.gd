@@ -103,7 +103,10 @@ func _patrullar() -> void:
 	elif global_position.x < inicio_x - distancia_patrulla:
 		dir = 1.0
 	elif is_on_wall():
-		dir = -dir
+		# Se aleja de la pared (voltear con -dir lo dejaba trabado: seguía "en la pared" un cuadro más)
+		var n := signf(get_wall_normal().x)
+		if n != 0.0:
+			dir = n
 	anim.flip_h = dir < 0
 	_play(["walk"])
 
